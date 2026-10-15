@@ -1,0 +1,517 @@
+{
+  "persona": "Lux Pay - consumer P2P money app (fictional)",
+  "notes": "Canonical support intents for a consumer money-movement app. `paraphrases` are semantically-equivalent rewordings used to demonstrate cache HITS against the canonical question. `cacheable=false` intents are account-specific or time-sensitive and demonstrate what a semantic cache must NOT serve (scope/partition story). `reference_answer` is a short gold answer used by the LLM-judge to score cached responses.",
+  "intents": [
+    {
+      "intent_id": "pin_reset",
+      "category": "account_access",
+      "canonical_question": "How do I reset my PIN?",
+      "paraphrases": [
+        "I forgot my PIN, how can I change it?",
+        "What's the process for setting a new PIN on my card?",
+        "Can you help me update the PIN for my account?",
+        "reset card pin"
+      ],
+      "reference_answer": "Open the app, go to the Card tab, tap your card, then select Change PIN. You'll verify your identity and can set a new 4-digit PIN. No fee, effective immediately.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "transfer_limits",
+      "category": "limits",
+      "canonical_question": "What are the limits on sending money?",
+      "paraphrases": [
+        "How much money can I send at once?",
+        "Is there a cap on how much I can transfer to another person?",
+        "What's the maximum P2P transfer amount?",
+        "sending limit per week"
+      ],
+      "reference_answer": "New accounts can send up to $250 per 7 days. After you verify your identity (name, DOB, last 4 of SSN), sending limits increase substantially. Limits are shown in Settings > Limits.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "direct_deposit_timing",
+      "category": "deposits",
+      "canonical_question": "When will my direct deposit arrive?",
+      "paraphrases": [
+        "How early do I get paid with direct deposit?",
+        "What time does my paycheck hit my account?",
+        "Do you offer early payday for direct deposits?",
+        "direct deposit arrival time"
+      ],
+      "reference_answer": "Direct deposits post as soon as we receive them from your employer or payer, which can be up to 2 days before your scheduled payday. Timing depends on when the sender submits the deposit.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "card_activation",
+      "category": "card",
+      "canonical_question": "How do I activate my new card?",
+      "paraphrases": [
+        "I just got my physical card, how do I turn it on?",
+        "Steps to activate the debit card I received in the mail?",
+        "How can I enable my new card using the app?",
+        "activate card QR code"
+      ],
+      "reference_answer": "In the app, open the Card tab and tap Activate Card. Scan the QR code on the sticker, or enter the CVV and expiration manually. Activation is instant.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "dispute_charge",
+      "category": "disputes",
+      "canonical_question": "How do I dispute a charge I don't recognize?",
+      "paraphrases": [
+        "There's a transaction I didn't make, how do I report it?",
+        "How can I file a dispute for a wrong charge?",
+        "I want to challenge a payment on my statement",
+        "report fraudulent transaction"
+      ],
+      "reference_answer": "Open the transaction in your Activity feed, tap it, then select Need Help & Report. Choose Dispute and follow the prompts. We'll investigate and may issue a provisional credit while the claim is reviewed.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "refund_timing",
+      "category": "payments",
+      "canonical_question": "How long do refunds take to show up?",
+      "paraphrases": [
+        "When will a merchant refund appear in my account?",
+        "How many days for a refund to process?",
+        "I got refunded but don't see the money yet, why?",
+        "refund processing time"
+      ],
+      "reference_answer": "Most merchant refunds appear within 1–5 business days, depending on when the merchant releases them. Instant refunds from other users of the app are immediate.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "add_money",
+      "category": "funding",
+      "canonical_question": "How do I add money to my balance?",
+      "paraphrases": [
+        "What's the way to load funds into my account?",
+        "How can I transfer money in from my bank?",
+        "Steps to top up my balance?",
+        "add cash from linked bank"
+      ],
+      "reference_answer": "Tap the Money tab, then Add Cash, enter an amount, and confirm. Funds pull from your linked bank account and are typically available instantly.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "cash_out_timing",
+      "category": "withdrawals",
+      "canonical_question": "How long does it take to cash out to my bank?",
+      "paraphrases": [
+        "What's the difference between standard and instant cash out?",
+        "When does a standard withdrawal reach my bank?",
+        "How fast can I move my balance to my bank account?",
+        "instant deposit fee cash out"
+      ],
+      "reference_answer": "Standard cash out is free and arrives in 1–3 business days. Instant cash out reaches your linked debit card in minutes for a small fee (a percentage of the amount).",
+      "cacheable": true
+    },
+    {
+      "intent_id": "fees_overview",
+      "category": "fees",
+      "canonical_question": "What fees does the app charge?",
+      "paraphrases": [
+        "Is the app free to use?",
+        "What are the costs for sending or receiving money?",
+        "Do you charge for anything?",
+        "list of fees"
+      ],
+      "reference_answer": "Sending and receiving money, standard cash out, and using your card are free. Fees apply to instant cash out, ATM withdrawals outside the free network, and certain crypto/stock transactions.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "close_account",
+      "category": "account_management",
+      "canonical_question": "How do I close my account?",
+      "paraphrases": [
+        "I want to delete my account, what do I do?",
+        "Steps to permanently close my profile?",
+        "How can I deactivate my account?",
+        "cancel my account"
+      ],
+      "reference_answer": "First cash out any remaining balance. Then go to Profile > Support > Something Else > Account Settings > Close My Account. Closure is permanent and your transaction history will no longer be accessible.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "tax_documents",
+      "category": "taxes",
+      "canonical_question": "Where can I find my tax documents?",
+      "paraphrases": [
+        "How do I download my 1099?",
+        "Where are my year-end tax forms?",
+        "Do you provide tax statements for my stock or Bitcoin activity?",
+        "get 1099-B form"
+      ],
+      "reference_answer": "Tax documents (such as a 1099-B for investing activity) are available under Profile > Documents > Tax Documents once they're issued, typically by mid-February for the prior tax year.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "referral_bonus",
+      "category": "rewards",
+      "canonical_question": "How does the referral bonus work?",
+      "paraphrases": [
+        "Can I earn money for inviting friends?",
+        "What do I get for referring someone?",
+        "How do I claim my invite reward?",
+        "referral code payout"
+      ],
+      "reference_answer": "Share your referral code from the Profile tab. When a new user signs up with your code and completes a qualifying transaction (e.g., sends a set amount within the promo window), you both receive the advertised bonus.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "atm_limits",
+      "category": "limits",
+      "canonical_question": "What are the ATM withdrawal limits?",
+      "paraphrases": [
+        "How much cash can I take out at an ATM per day?",
+        "Is there a daily cap on ATM withdrawals?",
+        "What's the max I can withdraw from an ATM?",
+        "atm daily limit"
+      ],
+      "reference_answer": "You can withdraw up to $1,000 per transaction, $1,000 per ATM withdrawal per day, and $1,000 per 7-day period, with a limit on the number of withdrawals per day. Third-party ATM operator limits may also apply.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "verify_identity",
+      "category": "account_access",
+      "canonical_question": "How do I verify my identity?",
+      "paraphrases": [
+        "What do I need to confirm my identity on the app?",
+        "Why am I being asked for my SSN?",
+        "How do I complete identity verification to raise my limits?",
+        "identity verification requirements"
+      ],
+      "reference_answer": "Provide your full name, date of birth, and the last 4 digits of your SSN in the app when prompted. Occasionally a photo of a government ID is required. Verification unlocks higher sending and withdrawal limits.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "change_linked_bank",
+      "category": "funding",
+      "canonical_question": "How do I change my linked bank account?",
+      "paraphrases": [
+        "How can I update the bank connected to my account?",
+        "Steps to remove an old bank and add a new one?",
+        "I switched banks, how do I relink?",
+        "update linked debit card"
+      ],
+      "reference_answer": "Go to the Money tab, tap the linked bank or card, then select Replace or Remove. Add the new account by entering its details or logging in through your bank. Instant transfers require a debit card.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "buy_bitcoin",
+      "category": "investing",
+      "canonical_question": "How do I buy Bitcoin in the app?",
+      "paraphrases": [
+        "Can I purchase crypto here and how?",
+        "Steps to buy BTC with my balance?",
+        "How do I invest in Bitcoin?",
+        "purchase bitcoin instructions"
+      ],
+      "reference_answer": "Open the Bitcoin (or Crypto) tab, tap Buy, enter a dollar amount, choose your funding source, and confirm. You can buy fractional amounts. Standard disclosures and any applicable fees are shown before you confirm.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "account_frozen",
+      "category": "account_access",
+      "canonical_question": "Why is my account locked or frozen?",
+      "paraphrases": [
+        "My account got restricted, what happened?",
+        "Why can't I access my funds all of a sudden?",
+        "What causes an account to be temporarily disabled?",
+        "account locked reasons"
+      ],
+      "reference_answer": "Accounts are sometimes temporarily locked for security reviews, unusual activity, or verification needs. Check the app for any prompts to confirm your identity or a recent transaction; completing them usually restores access.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "lost_stolen_card",
+      "category": "card",
+      "canonical_question": "What do I do if my card is lost or stolen?",
+      "paraphrases": ["Someone took my card, how do I report it?", "I can't find my debit card, how do I disable it?", "How do I order a replacement for a stolen card?"],
+      "reference_answer": "In the app, open the Card tab and select Disable Card to immediately block use. Report it as lost or stolen, and order a free replacement, which arrives in about a week. Your card number changes for security.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "freeze_card",
+      "category": "card",
+      "canonical_question": "How do I temporarily lock my card?",
+      "paraphrases": ["Can I freeze my card without canceling it?", "How do I pause my card for now?", "turn my card off temporarily"],
+      "reference_answer": "Open the Card tab and toggle Lock Card. This instantly pauses new spending while keeping the card active; toggle it off anytime to resume. Recurring subscriptions may still process depending on settings.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "card_declined",
+      "category": "card",
+      "canonical_question": "Why was my card declined?",
+      "paraphrases": ["My payment got rejected, what happened?", "Why isn't my card working at checkout?", "reasons a transaction is denied"],
+      "reference_answer": "Common reasons include insufficient balance, the card being locked, an unverified account, exceeding a spending limit, or the merchant being flagged. Check your balance and card status in the app; contact support if everything looks fine.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "virtual_card",
+      "category": "card",
+      "canonical_question": "How do I get a virtual card for online purchases?",
+      "paraphrases": ["Can I use a digital card before my physical one arrives?", "How do I create a card number for online shopping?", "virtual card setup"],
+      "reference_answer": "A virtual card is available instantly in the Card tab for online and in-app purchases, and can be added to your mobile wallet. You can view its number, expiration, and CVV in the app, and generate a new one if needed.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "mobile_check_deposit",
+      "category": "deposits",
+      "canonical_question": "How do I deposit a check from my phone?",
+      "paraphrases": ["Can I add a paper check using the app?", "Steps to take a picture of a check to deposit it?", "mobile check deposit process"],
+      "reference_answer": "In the app, go to the Money or Deposit section, select Deposit a Check, then photograph the front and back after endorsing it. Funds are typically available within a few business days; larger checks may take longer to clear.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "account_number_routing",
+      "category": "account_details",
+      "canonical_question": "Where do I find my account and routing number?",
+      "paraphrases": ["How do I get my routing number for direct deposit?", "What's my account number for setting up payments?", "find account and routing digits"],
+      "reference_answer": "Open the Money tab and tap the direct deposit or account details option to view your account and routing numbers. You can copy them or share a prefilled direct-deposit form with your employer.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "set_up_direct_deposit",
+      "category": "deposits",
+      "canonical_question": "How do I set up direct deposit?",
+      "paraphrases": ["How can I have my paycheck sent to the app?", "Steps to route my pay to this account?", "enroll in direct deposit"],
+      "reference_answer": "Find your account and routing numbers under the Money tab, then give them to your employer or fill out their direct-deposit form (the app can generate one). Deposits begin on your next pay cycle once your employer processes the change.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "recurring_payments",
+      "category": "payments",
+      "canonical_question": "How do I manage recurring or scheduled payments?",
+      "paraphrases": ["Can I set up an automatic monthly payment?", "How do I edit a scheduled transfer?", "manage subscriptions and autopay"],
+      "reference_answer": "Scheduled and recurring payments are managed in the Activity or Scheduled section, where you can create, edit, pause, or cancel them. Changes apply to future payments; a payment already in progress can't be stopped.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "request_money",
+      "category": "payments",
+      "canonical_question": "How do I request money from someone?",
+      "paraphrases": ["How can I ask a friend to pay me?", "Steps to send a payment request?", "request funds from another user"],
+      "reference_answer": "On the payment screen, enter the amount, select Request instead of Pay, choose the recipient, add an optional note, and send. They'll get a notification and can approve the request to pay you.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "cancel_pending_payment",
+      "category": "payments",
+      "canonical_question": "Can I cancel a payment I already sent?",
+      "paraphrases": ["How do I stop a transfer I just made?", "Is it possible to reverse a payment?", "cancel money I sent by mistake"],
+      "reference_answer": "If the payment is still pending you may be able to cancel it from the Activity feed. Payments to other users are usually instant and can't be reversed—ask the recipient to send it back. Contact support for suspected fraud.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "split_payment",
+      "category": "payments",
+      "canonical_question": "How do I split a bill with friends?",
+      "paraphrases": ["Can I divide a payment among several people?", "How do I request everyone's share of a check?", "split the cost with a group"],
+      "reference_answer": "Use the split or request feature to divide an amount evenly (or custom) across multiple recipients and send each person a request. As they pay, you'll see the payments arrive in your Activity.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "savings_interest",
+      "category": "savings",
+      "canonical_question": "Does the app pay interest on savings?",
+      "paraphrases": ["What's the interest rate on a savings balance?", "Can I earn yield on my money here?", "do I get paid interest"],
+      "reference_answer": "If you have a savings balance or eligible account, interest accrues daily and pays out monthly at the current advertised rate, which can change over time. Terms and any eligibility requirements are shown in the Savings section.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "round_ups",
+      "category": "savings",
+      "canonical_question": "How do round-ups to savings work?",
+      "paraphrases": ["Can the app save my spare change automatically?", "How do I turn on rounding up purchases?", "automatic savings from purchases"],
+      "reference_answer": "Enable round-ups in the Savings settings to round each card purchase up to the nearest dollar and move the difference into savings automatically. You can turn it off or adjust it anytime.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "overdraft_coverage",
+      "category": "account_management",
+      "canonical_question": "Do you charge overdraft fees?",
+      "paraphrases": ["What happens if I spend more than my balance?", "Is there overdraft protection?", "overdraft policy"],
+      "reference_answer": "We don't charge overdraft fees. Transactions that exceed your available balance are generally declined, though eligible accounts may have a small no-fee overdraft coverage buffer shown in the app.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "foreign_transaction",
+      "category": "fees",
+      "canonical_question": "Are there fees for using my card abroad?",
+      "paraphrases": ["Do you charge foreign transaction fees?", "What does it cost to spend in another currency?", "using my card in another country"],
+      "reference_answer": "There's no foreign transaction fee on card purchases; transactions are converted at the network exchange rate. ATM operators abroad may charge their own fees, and out-of-network ATM fees still apply.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "atm_locator",
+      "category": "withdrawals",
+      "canonical_question": "How do I find a free ATM?",
+      "paraphrases": ["Where can I withdraw cash without a fee?", "How do I locate in-network ATMs?", "fee-free ATM near me"],
+      "reference_answer": "Use the ATM locator in the app to find in-network ATMs where withdrawals are free. Out-of-network machines may charge a fee and the operator may add a surcharge; some accounts offer monthly fee reimbursements.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "update_contact_info",
+      "category": "account_management",
+      "canonical_question": "How do I update my phone number or email?",
+      "paraphrases": ["I got a new phone number, how do I change it?", "How do I edit my email on file?", "update my contact details"],
+      "reference_answer": "Go to Profile > Personal Information to update your email or phone number. You'll verify the new contact with a confirmation code. Keeping these current is important for security alerts and account recovery.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "two_factor_auth",
+      "category": "security",
+      "canonical_question": "How do I turn on two-factor authentication?",
+      "paraphrases": ["How can I add extra login security?", "Can I require a code when signing in?", "enable 2FA"],
+      "reference_answer": "In Profile > Security, enable two-factor authentication and choose SMS, an authenticator app, or biometrics. After that, sign-ins and sensitive actions require a second verification step.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "biometric_login",
+      "category": "security",
+      "canonical_question": "How do I enable Face ID or fingerprint login?",
+      "paraphrases": ["Can I sign in with my face or fingerprint?", "How do I turn on biometric unlock?", "use Touch ID for the app"],
+      "reference_answer": "Under Profile > Security, toggle on biometric login (Face ID / fingerprint). Your device stores the biometric data; the app only receives an approval, so your biometrics are never shared with us.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "notification_settings",
+      "category": "account_management",
+      "canonical_question": "How do I change my notification settings?",
+      "paraphrases": ["Can I turn off push alerts?", "How do I manage payment notifications?", "adjust alerts and emails"],
+      "reference_answer": "Open Profile > Notifications to control push, SMS, and email alerts for payments, deposits, and security events. Security-related alerts may be required and can't be fully disabled.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "download_statement",
+      "category": "account_details",
+      "canonical_question": "How do I download my account statement?",
+      "paraphrases": ["Where can I get a monthly statement?", "Can I export my transaction history?", "get a PDF of my activity"],
+      "reference_answer": "Monthly statements and transaction exports are available under Profile > Documents > Statements. You can view or download a PDF, and export activity as a CSV for a date range you choose.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "buy_stock",
+      "category": "investing",
+      "canonical_question": "How do I buy stocks in the app?",
+      "paraphrases": ["Can I invest in shares here and how?", "Steps to purchase a stock?", "how to start investing in equities"],
+      "reference_answer": "Open the Investing tab, search for a company, tap Buy, and enter a dollar amount—you can buy fractional shares. Orders execute during market hours; disclosures and any fees are shown before you confirm. Investing involves risk.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "sell_stock",
+      "category": "investing",
+      "canonical_question": "How do I sell a stock and withdraw the proceeds?",
+      "paraphrases": ["Steps to cash out an investment?", "How do I sell shares I own?", "sell equity and move money to my balance"],
+      "reference_answer": "In the Investing tab, open the holding, tap Sell, and choose an amount. Sales execute during market hours; proceeds settle after a couple of business days before you can withdraw them to your balance or bank.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "crypto_withdrawal",
+      "category": "investing",
+      "canonical_question": "How do I withdraw Bitcoin to an external wallet?",
+      "paraphrases": ["Can I send my crypto to another wallet?", "Steps to transfer BTC off the app?", "move bitcoin to my own wallet"],
+      "reference_answer": "In the Bitcoin tab, choose Withdraw, enter the destination wallet address, and confirm. Enable withdrawals if it's your first time (may require identity verification). Network fees apply and on-chain transfers are irreversible.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "tax_refund_deposit",
+      "category": "deposits",
+      "canonical_question": "Can I receive my tax refund in the app?",
+      "paraphrases": ["How do I have the IRS deposit my refund here?", "Can my government refund go to this account?", "direct deposit my tax refund"],
+      "reference_answer": "Yes—provide your app account and routing numbers on your tax return for direct deposit. Refunds often arrive a bit sooner than a mailed check, and you may get them up to a couple days early once the IRS releases the funds.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "paycheck_advance",
+      "category": "account_management",
+      "canonical_question": "Can I get paid early or access an advance?",
+      "paraphrases": ["Is there a way to get my paycheck sooner?", "Do you offer a cash advance before payday?", "early access to wages"],
+      "reference_answer": "With eligible direct deposit you can be paid up to two days early automatically. Some users may qualify for a small no-interest advance shown in the app; eligibility and limits depend on your deposit history.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "credit_building",
+      "category": "credit",
+      "canonical_question": "How does the credit-building feature work?",
+      "paraphrases": ["Can this app help me build credit?", "How do I improve my credit score with the card?", "credit builder program"],
+      "reference_answer": "The credit-building product typically uses a secured card tied to your balance; on-time activity is reported to the credit bureaus to help build history. Enroll in the Credit section and review the terms and any requirements.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "spending_insights",
+      "category": "account_management",
+      "canonical_question": "Where can I see my spending by category?",
+      "paraphrases": ["Does the app track where my money goes?", "How do I view a breakdown of my purchases?", "spending analytics and budgets"],
+      "reference_answer": "The Insights or Spending section groups your transactions by category and merchant and shows monthly trends. You can tap a category to see the underlying transactions and set optional budget alerts.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "gift_card_boosts",
+      "category": "rewards",
+      "canonical_question": "How do instant discounts or boosts work?",
+      "paraphrases": ["What are card boosts and how do I use one?", "How do I get a discount at checkout?", "apply a reward to my card"],
+      "reference_answer": "Boosts are instant discounts you activate in the Card tab and apply automatically when you pay with your card at eligible merchants. You can have one active at a time and switch it whenever you like.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "teen_account",
+      "category": "account_management",
+      "canonical_question": "Can a teenager use the app?",
+      "paraphrases": ["Is there an account for kids under 18?", "How do I set up my teen with a card?", "sponsored account for minors"],
+      "reference_answer": "Teens within the supported age range can use a sponsored account approved and managed by a parent or guardian, who can view activity and set controls. A guardian starts the process from their own account.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "business_account",
+      "category": "account_management",
+      "canonical_question": "Can I accept payments for my business?",
+      "paraphrases": ["Is there a business profile for taking payments?", "How do I get paid by customers?", "use the app for my small business"],
+      "reference_answer": "You can switch to or create a business account to accept payments from customers, which may be subject to a small per-transaction fee. Business payments have different tax reporting, and you can view records in the app.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "scam_protection",
+      "category": "security",
+      "canonical_question": "How do I protect myself from scams?",
+      "paraphrases": ["How can I avoid getting scammed on the app?", "What are common fraud schemes to watch for?", "tips to stay safe from scammers"],
+      "reference_answer": "Only send money to people you know and trust—payments are like cash and often can't be reversed. Never share your PIN, sign-in code, or account details, and ignore anyone pressuring you to pay to 'claim' a prize or 'verify' your account. Report suspicious activity in the app.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "reactivate_account",
+      "category": "account_access",
+      "canonical_question": "How do I reopen a closed account?",
+      "paraphrases": ["Can I reactivate an account I closed?", "I want my old account back, is that possible?", "restore a deactivated account"],
+      "reference_answer": "A permanently closed account generally can't be reopened; you'd sign up for a new account. If your account was only locked or paused, completing any verification prompts usually restores access—contact support if you're unsure which applies.",
+      "cacheable": true
+    },
+    {
+      "intent_id": "my_balance",
+      "category": "account_specific",
+      "canonical_question": "What is my current balance?",
+      "paraphrases": [
+        "How much money do I have right now?",
+        "Show me my available funds",
+        "what's my account balance"
+      ],
+      "reference_answer": "ACCOUNT-SPECIFIC: must be answered from the authenticated user's live account data, never from a shared cache.",
+      "cacheable": false,
+      "non_cacheable_reason": "Answer is per-user and changes constantly; a shared semantic cache would leak or serve stale/incorrect balances."
+    },
+    {
+      "intent_id": "why_my_transfer_pending",
+      "category": "account_specific",
+      "canonical_question": "Why is my transfer still pending?",
+      "paraphrases": [
+        "My payment hasn't gone through, what's wrong with it?",
+        "Why is the money I sent stuck?",
+        "my specific transfer is delayed"
+      ],
+      "reference_answer": "ACCOUNT-SPECIFIC: depends on the individual transaction's state; general guidance may be cacheable but the specific status must come from the user's live data.",
+      "cacheable": false,
+      "non_cacheable_reason": "Textually similar to a general FAQ but requires the specific transaction's live status; demonstrates why scope/partition keys and confidence gating matter."
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+# Deploys the app in server/ + frontend/ (`databricks apps deploy`). The notebooks are not part of
+# the bundle: run them from a Git folder.
+#
+# Workspace-specific values are bundle variables with placeholder defaults. Supply yours either
+# with --var, or as env vars (BUNDLE_VAR_catalog=..., BUNDLE_VAR_warehouse_id=...). The target has
+# no `host`, so the workspace comes from --profile.
+bundle:
+  name: lakebase-semantic-cache
+
+variables:
+  catalog:
+    description: UC catalog holding cache_events, the eval tables and judge_results
+    default: main
+  schema:
+    description: UC schema inside that catalog
+    default: semantic_cache
+  warehouse_id:
+    description: SQL warehouse the app logs events and reads measurements through
+    default: ""
+  lakebase_project:
+    description: Lakebase project (instance) holding the cache table
+    default: semantic-cache
+  llm_endpoint:
+    description: Chat endpoint that answers cache misses
+    default: databricks-claude-opus-4-8
+  embedding_endpoint:
+    description: Embedding endpoint (1024-d by default; see CacheConfig.dimensions)
+    default: databricks-qwen3-embedding-0-6b
+
+sync:
+  include:
+    - wheels/*.whl          # gitignored, but the app installs the SDK from it
+  exclude:
+    - notebooks/**
+    - .venv/**
+    - .node/**
+    - node_modules/**
+    - .isaac/**
+    - server/static/**      # built on the platform by `npm run build`
+
+resources:
+  apps:
+    semantic_cache_app:
+      name: lakebase-semantic-cache
+      description: "Semantic cache on Lakebase: ROI calculator, playground, false-hit judge"
+      source_code_path: .
+      config:
+        command: ["python", "-m", "server.main"]
+        env:
+          - name: LAKEBASE_INSTANCE
+            value: ${var.lakebase_project}
+          - name: PG_SCHEMA
+            value: semantic_cache
+          - name: CACHE_BACKEND
+            value: pgvector
+          - name: UC_CATALOG
+            value: ${var.catalog}
+          - name: UC_SCHEMA
+            value: ${var.schema}
+          - name: LLM_ENDPOINT
+            value_from: llm-endpoint
+          - name: EMBEDDING_ENDPOINT
+            value_from: embedding-endpoint
+          - name: DATABRICKS_WAREHOUSE_ID
+            value_from: sql-warehouse
+      resources:
+        - name: llm-endpoint
+          serving_endpoint:
+            name: ${var.llm_endpoint}
+            permission: CAN_QUERY
+        - name: embedding-endpoint
+          serving_endpoint:
+            name: ${var.embedding_endpoint}
+            permission: CAN_QUERY
+        - name: sql-warehouse
+          sql_warehouse:
+            id: ${var.warehouse_id}
+            permission: CAN_USE
+        - name: postgres
+          postgres:
+            branch: projects/${var.lakebase_project}/branches/production
+            database: projects/${var.lakebase_project}/branches/production/databases/databricks-postgres
+            permission: CAN_CONNECT_AND_CREATE
+
+targets:
+  dev:
+    default: true

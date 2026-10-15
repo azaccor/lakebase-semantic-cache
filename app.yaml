@@ -1,0 +1,20 @@
+# Runtime config for a UI/manual deploy. `databricks apps deploy` uses the bundle instead, where
+# these values come from databricks.yml's variables - keep the two in sync if you deploy both ways.
+command: ["python", "-m", "server.main"]
+env:
+  - name: LAKEBASE_INSTANCE
+    value: semantic-cache
+  - name: PG_SCHEMA
+    value: semantic_cache
+  - name: CACHE_BACKEND
+    value: pgvector
+  - name: UC_CATALOG
+    value: main
+  - name: UC_SCHEMA
+    value: semantic_cache
+  - name: LLM_ENDPOINT
+    value_from: llm-endpoint
+  - name: EMBEDDING_ENDPOINT
+    value_from: embedding-endpoint
+  - name: DATABRICKS_WAREHOUSE_ID
+    value_from: sql-warehouse

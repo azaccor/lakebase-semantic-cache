@@ -1,0 +1,7 @@
+# Databricks App (server/). The SDK is not on PyPI yet: drop its wheel into wheels/
+# (gitignored) and the bundle syncs it with the app. Its own deps resolve from PyPI.
+--find-links=./wheels
+databricks-lakebase-adapters[pgvector]
+databricks-sdk>=0.86
+fastapi>=0.115,<1
+uvicorn[standard]>=0.30,<1
