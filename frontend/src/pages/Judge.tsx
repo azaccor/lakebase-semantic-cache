@@ -94,7 +94,7 @@ export function JudgePage() {
                   detail={summary.labeled ? `on the ${summary.labeled} judged replay hits with a known FAQ` : "no labeled hits judged yet"} />
             <Stat label="Judge agrees with labels" value={pct(summary.agreement)}
                   detail={summary.labeled ? `${summary.labeled} labeled hits` : "replay labeled traffic to measure"} />
-            <Stat label="Last judged" value={ago(summary.last_ts)} detail={`${summary.judge_model}, judge prompt ${summary.judge_version}`} />
+            <Stat label="Last judged" value={ago(summary.last_ts)} detail={`${summary.judge_model}, judge prompt ${summary.judge_version}, cache prompt ${summary.prompt_version}`} />
           </div>
 
           <Card title="Judged hits" subtitle={`Most recent first. Source: ${summary.source}`}>

@@ -61,8 +61,8 @@ async def lifespan(_: FastAPI):
         events=EventLog(w, S.warehouse_id, S.table("cache_events"), backend=S.backend,
                         price_in_per_m=S.price_in_per_m, price_out_per_m=S.price_out_per_m),
         measured=Measured(wh, S),
-        judge=Judge(w, wh, S, generate, system_prompt),
     )
+    STATE["judge"] = Judge(w, wh, S, generate, STATE["scope"]["prompt_version"])
     log.info("Ready: backend=%s table=%s scope=%s", S.backend, cfg.qualified_table, STATE["scope"])
     yield
     cache.close()

@@ -29,6 +29,7 @@ JUDGE_COLUMNS = [
     ("question", "STRING"), ("matched_question", "STRING"), ("similarity", "DOUBLE"), ("threshold", "DOUBLE"),
     ("cached_answer", "STRING"), ("fresh_answer", "STRING"), ("verdict", "STRING"), ("reason", "STRING"),
     ("expected_intent", "STRING"), ("matched_intent", "STRING"), ("label_correct", "BOOLEAN"),
+    ("prompt_version", "STRING"),   # the cache scope's: re-seeding under a new system prompt starts over
 ]
 
 JUDGE_PROMPT = """You are auditing a semantic cache in front of a customer-support assistant. The cache
@@ -57,7 +58,7 @@ JUDGE_VERSION = hashlib.sha256(JUDGE_PROMPT.encode()).hexdigest()[:8]
 
 # A hit's identity in cache_events (which has no id column): rows of one log call share
 # run_id and event_ts, and a replay never repeats a question within a run. Each question is
-# judged once per judge (model + prompt version), so repeats of a question don't weigh the rate twice.
+# judged once per judge (model + prompt version) and cache prompt version, so repeats of a question don't weigh the rate twice.
 EVENT_KEY = "sha2(concat_ws('|', e.run_id, cast(e.event_ts AS string), e.question), 256)"
 
 
@@ -72,13 +73,17 @@ def wilson(k: int, n: int, z: float = 1.96) -> tuple[float, float] | None:
 
 
 class Judge:
-    def __init__(self, w, wh: Warehouse, settings: Settings, generate, system_prompt: str):
-        self.w, self.wh, self.s, self.generate, self.system_prompt = w, wh, settings, generate, system_prompt
+    def __init__(self, w, wh: Warehouse, settings: Settings, generate, prompt_version: str):
+        self.w, self.wh, self.s, self.generate, self.prompt_version = w, wh, settings, generate, prompt_version
         self.table = settings.table("judge_results")
         self.jobs: dict[str, dict] = {}
         self._lock = threading.Lock()
         self.wh.query(f"CREATE TABLE IF NOT EXISTS {self.table} ("
                       + ", ".join(f"{c} {t}" for c, t in JUDGE_COLUMNS) + ")")
+        have = {r["col_name"] for r in self.wh.query(f"DESCRIBE TABLE {self.table}")}
+        if missing := [(c, t) for c, t in JUDGE_COLUMNS if c not in have]:   # a table from an older version
+            self.wh.query(f"ALTER TABLE {self.table} ADD COLUMNS ("
+                          + ", ".join(f"{c} {t}" for c, t in missing) + ")")
 
     # --- jobs ---------------------------------------------------------------------
     def start(self, n: int, sources: list[str]) -> str:
@@ -115,11 +120,13 @@ class Judge:
                 FROM {self.s.table("cache_events")} e
                 LEFT ANTI JOIN {self.table} j
                   ON j.question = e.question AND j.judge_model = :model AND j.judge_version = :version
+                 AND j.prompt_version = :prompt_version
                  AND j.verdict IN ('correct', 'incorrect')   -- retry unparsed verdicts
-                WHERE e.hit AND e.scope['model'] = :model AND e.source IN ({", ".join(":" + k for k in src)})
+                WHERE e.hit AND e.scope['model'] = :model AND e.scope['prompt_version'] = :prompt_version
+                  AND e.source IN ({", ".join(":" + k for k in src)})
                 QUALIFY row_number() OVER (PARTITION BY e.question ORDER BY e.event_ts DESC) = 1
                 ORDER BY e.event_ts DESC LIMIT {int(n)}""",
-            {"model": self.s.llm_endpoint, "version": JUDGE_VERSION, **src})
+            {"model": self.s.llm_endpoint, "version": JUDGE_VERSION, "prompt_version": self.prompt_version, **src})
 
     def _judge_one(self, e: dict) -> None:
         fresh = self.generate(e["question"])
@@ -142,7 +149,7 @@ class Judge:
             "matched_question": e["matched_question"], "similarity": e["similarity"], "threshold": e["threshold"],
             "cached_answer": e["answer"], "fresh_answer": fresh_text, "verdict": verdict, "reason": reason,
             "expected_intent": attrs.get("expected_intent"), "matched_intent": matched,
-            "label_correct": None if label is None else str(label).lower(),
+            "label_correct": None if label is None else str(label).lower(), "prompt_version": self.prompt_version,
         }
         self.wh.query(
             f"INSERT INTO {self.table} ({', '.join(c for c, _ in JUDGE_COLUMNS)}) VALUES ("
@@ -156,21 +163,24 @@ class Judge:
                        count_if(label_correct IS NOT NULL AND (verdict = 'correct') = label_correct) AS agree,
                        count_if(label_correct = false) AS label_incorrect, max(judged_ts) AS last_ts
                 FROM {self.table} WHERE judge_model = :model AND judge_version = :version
+                  AND prompt_version = :prompt_version
                   AND verdict IN ('correct', 'incorrect')""",
-            {"model": self.s.llm_endpoint, "version": JUDGE_VERSION})[0]
+            {"model": self.s.llm_endpoint, "version": JUDGE_VERSION, "prompt_version": self.prompt_version})[0]
         rows = self.wh.query(
             f"""SELECT judged_ts, source, question, matched_question, similarity, threshold, cached_answer,
                        fresh_answer, verdict, reason, expected_intent, matched_intent, label_correct
                 FROM {self.table} WHERE judge_model = :model AND judge_version = :version
+                  AND prompt_version = :prompt_version
                 ORDER BY judged_ts DESC LIMIT {int(limit)}""",
-            {"model": self.s.llm_endpoint, "version": JUDGE_VERSION})
+            {"model": self.s.llm_endpoint, "version": JUDGE_VERSION, "prompt_version": self.prompt_version})
         n, k = int(agg["n"]), int(agg["incorrect"])
         labeled = int(agg["labeled"])
         for r in rows:
             r["similarity"], r["threshold"] = num(r["similarity"]), num(r["threshold"])
             r["label_correct"] = None if r["label_correct"] is None else r["label_correct"] == "true"
         return {
-            "source": self.table, "judge_model": self.s.llm_endpoint, "judge_version": JUDGE_VERSION, "last_ts": agg["last_ts"],
+            "source": self.table, "judge_model": self.s.llm_endpoint, "judge_version": JUDGE_VERSION, "prompt_version": self.prompt_version,
+            "last_ts": agg["last_ts"],
             "judged": n, "incorrect": k, "false_hit_rate": k / n if n else None, "ci95": wilson(k, n),
             "labeled": labeled, "agreement": int(agg["agree"]) / labeled if labeled else None,
             "label_false_hit_rate": int(agg["label_incorrect"]) / labeled if labeled else None,

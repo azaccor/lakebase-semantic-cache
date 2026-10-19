@@ -93,14 +93,15 @@ class SemanticCache:
         scope = scope or {}
         threshold = self.cfg.similarity_threshold if threshold is None else threshold
         t0 = time.perf_counter()
-        if embedding is None:
+        embedded = embedding is None   # a caller-supplied embedding has no embed time to report
+        if embedded:
             embedding = self.embed([question])[0]
         t1 = time.perf_counter()
         rows = self.backend.search(embedding, filters=self._scope_filter(scope), top_k=1)
         t2 = time.perf_counter()
 
         res = CacheResult(question=question, answer=None, hit=False, scope=scope, threshold=threshold,
-                          embed_ms=(t1 - t0) * 1e3, lookup_ms=(t2 - t1) * 1e3, embedding=embedding)
+                          embed_ms=(t1 - t0) * 1e3 if embedded else 0.0, lookup_ms=(t2 - t1) * 1e3, embedding=embedding)
         if rows:
             best = rows[0]
             res.similarity = best["similarity"]

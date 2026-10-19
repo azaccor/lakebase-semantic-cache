@@ -94,7 +94,7 @@ A Databricks App (FastAPI + React) on the same module and cache table:
   replay the labeled held-out paraphrases at any threshold.
 - **False-hit judge**: for a sample of hits, the LLM writes a fresh answer and judges whether the cached one
   answers the question. Gives a measured false-hit rate (with a 95% CI) and its agreement with the labels.
-  Results go to `judge_results`, per judge prompt version.
+  Results go to `judge_results`, per judge prompt version and cache prompt version (re-seeding starts over).
 
 Lookups search the seeded FAQs and the app's own entries; misses are cached under tenant `app`, so
 `02_evaluate`'s scope is unchanged. Requests are logged to `cache_events` (`source = 'app'` / `'app-replay'`)

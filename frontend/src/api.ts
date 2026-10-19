@@ -70,7 +70,7 @@ export type JudgeRow = {
 };
 
 export type JudgeSummary = {
-  source: string; judge_model: string; judge_version: string; last_ts: string | null;
+  source: string; judge_model: string; judge_version: string; prompt_version: string; last_ts: string | null;
   judged: number; incorrect: number; false_hit_rate: number | null; ci95: [number, number] | null;
   labeled: number; agreement: number | null; label_false_hit_rate: number | null;
   rows: JudgeRow[];

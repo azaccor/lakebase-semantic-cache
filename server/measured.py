@@ -39,7 +39,8 @@ class Measured:
             f"""SELECT count(*) AS n, avg(embed_ms) AS embed_ms, avg(lookup_ms) AS lookup_ms,
                        percentile(embed_ms, 0.5) AS embed_p50_ms, percentile(lookup_ms, 0.5) AS lookup_p50_ms,
                        max(event_ts) AS last_ts
-                FROM {events} WHERE backend = :backend AND embed_ms > 0""",
+                FROM {events} WHERE backend = :backend
+                  AND embed_ms >= 1   -- replays pass precomputed embeddings (older rows logged ~0.0001 ms)""",
             {"backend": s.backend})[0]
         return {
             "backend": s.backend,
