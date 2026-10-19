@@ -15,8 +15,8 @@ SWEEP_COLUMNS = ("threshold", "hit_rate", "cacheable_hit_rate", "precision", "fa
 
 
 class Measured:
-    def __init__(self, wh: Warehouse, settings: Settings):
-        self.wh, self.s = wh, settings
+    def __init__(self, wh: Warehouse, settings: Settings, prompt_version: str):
+        self.wh, self.s, self.prompt_version = wh, settings, prompt_version
         self._cached: tuple[float, dict] | None = None
         self._lock = threading.Lock()
 
@@ -33,8 +33,9 @@ class Measured:
                        percentile(generate_ms, 0.95) AS llm_p95_ms, avg(input_tokens) AS input_tokens,
                        avg(output_tokens) AS output_tokens, avg(write_ms) AS write_ms, max(event_ts) AS last_ts
                 FROM {events}
-                WHERE NOT hit AND input_tokens > 0 AND backend = :backend AND scope['model'] = :model""",
-            {"backend": s.backend, "model": s.llm_endpoint})[0]
+                WHERE NOT hit AND input_tokens > 0 AND backend = :backend AND scope['model'] = :model
+                  AND scope['prompt_version'] = :prompt_version   -- the system prompt sets the input tokens""",
+            {"backend": s.backend, "model": s.llm_endpoint, "prompt_version": self.prompt_version})[0]
         overhead = self.wh.query(
             f"""SELECT count(*) AS n, avg(embed_ms) AS embed_ms, avg(lookup_ms) AS lookup_ms,
                        percentile(embed_ms, 0.5) AS embed_p50_ms, percentile(lookup_ms, 0.5) AS lookup_p50_ms,

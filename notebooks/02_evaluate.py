@@ -260,11 +260,15 @@ fig.show()
 # MAGIC %md ## Savings at the chosen threshold
 # MAGIC Baseline = every request calls the LLM. With the cache, every request pays embed + lookup, and
 # MAGIC misses additionally pay the LLM call and a cache write. LLM latency/cost come from the
-# MAGIC `01_build_cache` misses; embedding cost is not included.
+# MAGIC `01_build_cache` misses in this scope (model + system prompt version, since the prompt sets the input
+# MAGIC tokens); embedding cost is not included.
 
 # COMMAND ----------
 
-events = spark.table(f"{catalog}.{schema}.cache_events").where("NOT hit AND input_tokens > 0").toPandas()
+events = (spark.table(f"{catalog}.{schema}.cache_events")
+          .where("NOT hit AND input_tokens > 0")
+          .where(f"scope['model'] = '{scope['model']}' AND scope['prompt_version'] = '{scope['prompt_version']}'")
+          .toPandas())
 llm_ms, llm_cost, write_ms = events["generate_ms"].mean(), events["cost_usd"].mean(), events["write_ms"].mean()
 
 summary = []
