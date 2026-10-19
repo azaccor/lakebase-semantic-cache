@@ -27,11 +27,11 @@ function initialInputs(config: Config, m: Measured): RoiInputs {
     writeMs: Math.round(m.llm.write_ms ?? 15),
     queryTokens: 20,
     embedPricePerM: 0.02,
-    lakebaseCu: requiredCu(1_000_000),
+    lakebaseCu: requiredCu(100_000),
     activeHours: HOURS_PER_MONTH,
     alwaysOnCuHourPrice: 0.069,
     cuHourPrice: 0.092,
-    cacheEntries: 1_000_000,
+    cacheEntries: 100_000,
     bytesPerEntry: 13_000,
     storagePerGbMonth: 0.545,
   };
@@ -125,7 +125,7 @@ export function RoiPage({ config, measured, threshold, setThreshold }: Props) {
                              suffix="$/CU-hour" prov={{ kind: "price", text: "Lakebase autoscaling, list" }} />
               </>}
           <NumberField label="Cache entries" value={x.cacheEntries} onChange={set("cacheEntries")} step={10000} min={0}
-                       prov={{ kind: "assumption", text: "about a month of misses (30-day TTL)" }} />
+                       prov={{ kind: "assumption", text: "e.g. a ~3-day TTL at 1M requests/month" }} />
           <NumberField label="Storage per entry" value={x.bytesPerEntry} onChange={set("bytesPerEntry")} step={1000}
                        suffix="bytes" prov={{ kind: "assumption", text: "8.2 KB index (03b) + ~4.7 KB row (vector + text)" }} />
           <NumberField label="Storage price" value={x.storagePerGbMonth} onChange={set("storagePerGbMonth")} step={0.005}

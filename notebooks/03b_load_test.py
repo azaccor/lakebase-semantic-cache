@@ -20,8 +20,10 @@
 # MAGIC    first, and the query plan of the lookup is recorded so you can see which index served it.
 # MAGIC
 # MAGIC Distractors come from `03a_scale_data` (run it first with `target_rows` ≥ the largest size).
-# MAGIC Sizes are cumulative: each step appends rows to both tables and rebuilds the indexes.
-# MAGIC Lakebase compute autoscales (CU range set on the project), so note it when comparing runs.
+# MAGIC Sizes are cumulative: each step appends rows to both tables and rebuilds the indexes. The tables are
+# MAGIC load-test copies (`cache_entries_<backend>_loadtest`) seeded with the live cache's FAQ entries.
+# MAGIC Lakebase compute autoscales (CU range set on the project), so note it when comparing runs; the
+# MAGIC `lakebase_cu` widget is recorded with the results.
 
 # COMMAND ----------
 
@@ -41,6 +43,7 @@ dbutils.widgets.text("hnsw_m", "16")
 dbutils.widgets.text("hnsw_ef_construction", "64")
 dbutils.widgets.text("ef_search_sweep", "40,100,200,400")
 dbutils.widgets.text("threshold", "0.75")
+dbutils.widgets.text("lakebase_cu", "")   # the endpoint's CU range during the run, e.g. "1" or "4-8"
 
 # COMMAND ----------
 
@@ -51,6 +54,7 @@ dbutils.library.restartPython()
 # COMMAND ----------
 
 import hashlib, json, os, random, sys, threading, time, uuid
+from dataclasses import replace
 import numpy as np
 import pandas as pd
 
@@ -75,15 +79,20 @@ with open("../data/system_prompt.txt") as f:
 scope = {"model": dbutils.widgets.get("llm_endpoint"),
          "prompt_version": hashlib.sha256(SYSTEM_PROMPT.encode()).hexdigest()[:8], "tenant": ""}
 
+# Load-test copies of the cache tables, so the distractors never reach the live cache the app and
+# 02_evaluate serve from. Each copy starts with the live table's FAQ entries.
 caches = {b: SemanticCache(CacheConfig(
-    lakebase_instance=dbutils.widgets.get("lakebase_instance"), backend=b,
+    lakebase_instance=dbutils.widgets.get("lakebase_instance"), backend=b, table=f"cache_entries_{b}_loadtest",
     embedding_endpoint=dbutils.widgets.get("embedding_endpoint"), track_hits=False,
     pool_max_size=max(concurrency) + 4, index_build_mem=dbutils.widgets.get("index_build_mem") or None,
     hnsw_ef_search=int(dbutils.widgets.get("hnsw_ef_search")),
     hnsw_m=int(dbutils.widgets.get("hnsw_m")), hnsw_ef_construction=int(dbutils.widgets.get("hnsw_ef_construction")),
 )) for b in backends}
-for c in caches.values():
+for b, c in caches.items():
     c.backend.setup()
+    live = SemanticCache(replace(c.cfg, table=None))   # cache_entries_<backend>
+    print(f"{b}: copied {c.backend.sync_scope_from(live.backend, scope)} FAQ entries from {live.cfg.qualified_table}")
+    live.close()
 
 # COMMAND ----------
 
@@ -266,11 +275,11 @@ for size in sizes:
                                  "p95_ms": np.percentile(ms, 95), "p99_ms": np.percentile(ms, 99)})
             print(f"  {b}: {n:>2} clients  {len(ms) / duration_s:7.0f} qps  p50 {np.percentile(ms, 50):6.1f} ms  p95 {np.percentile(ms, 95):6.1f} ms")
 
-index_df, accuracy_df, latency_df, quality_df = (pd.DataFrame(x).assign(run_id=run_id)
+index_df, accuracy_df, latency_df, quality_df = (pd.DataFrame(x).assign(run_id=run_id, lakebase_cu=dbutils.widgets.get("lakebase_cu"))
                                                   for x in (index_rows, accuracy_rows, latency_rows, quality_rows))
 for name, df in [("load_test_index", index_df), ("load_test_accuracy", accuracy_df),
                  ("load_test_latency", latency_df), ("load_test_ann_quality", quality_df)]:
-    spark.createDataFrame(df).write.mode("append").saveAsTable(f"{catalog}.{schema}.{name}")
+    spark.createDataFrame(df).write.mode("append").option("mergeSchema", "true").saveAsTable(f"{catalog}.{schema}.{name}")
 
 # COMMAND ----------
 
