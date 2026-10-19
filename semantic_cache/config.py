@@ -39,7 +39,7 @@ class CacheConfig:
     dimensions: int = 1024
 
     # --- Matching --------------------------------------------------------------------
-    similarity_threshold: float = 0.70        # cosine similarity required for a hit
+    similarity_threshold: float = 0.75        # cosine similarity required for a hit
     # A lookup only matches entries whose scope values are equal to the request's, so a
     # model or prompt change never serves another configuration's answer.
     scope_columns: tuple[str, ...] = ("model", "prompt_version", "tenant")

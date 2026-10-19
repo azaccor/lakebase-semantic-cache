@@ -32,7 +32,7 @@ dbutils.widgets.text("backends", "pgvector")   # e.g. "pgvector,lakebase_search"
 dbutils.widgets.text("pg_schema", "semantic_cache")
 dbutils.widgets.text("embedding_endpoint", "databricks-qwen3-embedding-0-6b")
 dbutils.widgets.text("llm_endpoint", "databricks-claude-opus-4-8")
-dbutils.widgets.text("threshold", "0.70")
+dbutils.widgets.text("threshold", "0.75")
 
 # COMMAND ----------
 

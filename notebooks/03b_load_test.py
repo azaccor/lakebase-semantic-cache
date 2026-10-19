@@ -40,7 +40,7 @@ dbutils.widgets.text("hnsw_ef_search", "100")
 dbutils.widgets.text("hnsw_m", "16")
 dbutils.widgets.text("hnsw_ef_construction", "64")
 dbutils.widgets.text("ef_search_sweep", "40,100,200,400")
-dbutils.widgets.text("threshold", "0.70")
+dbutils.widgets.text("threshold", "0.75")
 
 # COMMAND ----------
 
@@ -280,7 +280,7 @@ for name, df in [("load_test_index", index_df), ("load_test_accuracy", accuracy_
 
 display(index_df.round(2))
 display(quality_df.round(4))
-display(accuracy_df[accuracy_df.threshold.isin([round(threshold, 2), 0.75, 0.8])].round(3))
+display(accuracy_df[accuracy_df.threshold.isin([0.7, round(threshold, 2), 0.8])].round(3))
 display(latency_df.round(1))
 
 # COMMAND ----------

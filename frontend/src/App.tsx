@@ -23,7 +23,7 @@ export function App() {
   const [config, setConfig] = useState<Config | null>(null);
   const [measured, setMeasured] = useState<Measured | null>(null);
   const [error, setError] = useState<unknown>(null);
-  const [threshold, setThreshold] = useState(0.7);
+  const [threshold, setThreshold] = useState(0.75);
 
   const load = async () => {
     setError(null);
