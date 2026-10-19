@@ -4,7 +4,7 @@ import { LineChart } from "../components/LineChart";
 import { Card, NumberField, Slider, Stat } from "../components/ui";
 import type { Provenance } from "../components/ui";
 import { ago, count, ms, pct, usd, usdPrecise } from "../format";
-import { computeRoi, HOURS_PER_MONTH } from "../roi";
+import { computeRoi, HOURS_PER_MONTH, indexGb, requiredCu } from "../roi";
 import type { RoiInputs, SweepPoint } from "../roi";
 
 type Props = { config: Config; measured: Measured; threshold: number; setThreshold: (t: number) => void };
@@ -27,12 +27,12 @@ function initialInputs(config: Config, m: Measured): RoiInputs {
     writeMs: Math.round(m.llm.write_ms ?? 15),
     queryTokens: 20,
     embedPricePerM: 0.02,
-    lakebaseCu: 1,
+    lakebaseCu: requiredCu(1_000_000),
     activeHours: HOURS_PER_MONTH,
     alwaysOnCuHourPrice: 0.069,
     cuHourPrice: 0.092,
-    cacheEntries: 100_000,
-    bytesPerEntry: 10_000,
+    cacheEntries: 1_000_000,
+    bytesPerEntry: 13_000,
     storagePerGbMonth: 0.545,
   };
 }
@@ -40,8 +40,12 @@ function initialInputs(config: Config, m: Measured): RoiInputs {
 export function RoiPage({ config, measured, threshold, setThreshold }: Props) {
   const [x, setX] = useState<RoiInputs>(() => initialInputs(config, measured));
   const set = (k: keyof RoiInputs) => (v: number | boolean) => setX((prev) => ({ ...prev, [k]: v }));
+  // Compute follows the cache size until the user sets it.
+  const [cuAuto, setCuAuto] = useState(true);
+  const minCu = requiredCu(x.cacheEntries);
+  const cu = cuAuto ? minCu : x.lakebaseCu;
   const sweep = measured.sweep.points as SweepPoint[];
-  const r = computeRoi({ ...x, threshold }, sweep);
+  const r = computeRoi({ ...x, lakebaseCu: cu, threshold }, sweep);
 
   const llmProv = (v: number | null, what: string): Provenance =>
     v === null ? { kind: "assumption", text: "no misses logged yet" }
@@ -76,9 +80,9 @@ export function RoiPage({ config, measured, threshold, setThreshold }: Props) {
         </Card>
         <Card title="LLM">
           <NumberField label="Input price" value={x.priceInPerM} onChange={set("priceInPerM")} suffix="$/1M tok"
-                       prov={{ kind: "assumption", text: "list-price assumption; use your contract rate" }} />
+                       prov={{ kind: "price", text: `${config.llm_endpoint} list; use your contract rate` }} />
           <NumberField label="Output price" value={x.priceOutPerM} onChange={set("priceOutPerM")} suffix="$/1M tok"
-                       prov={{ kind: "assumption", text: "list-price assumption; use your contract rate" }} />
+                       prov={{ kind: "price", text: `${config.llm_endpoint} list; use your contract rate` }} />
           <NumberField label="Input tokens per call" value={x.inputTokens} onChange={set("inputTokens")} prov={llmProv(measured.llm.input_tokens, "mean")} />
           <NumberField label="Output tokens per call" value={x.outputTokens} onChange={set("outputTokens")} prov={llmProv(measured.llm.output_tokens, "mean")} />
           <NumberField label="Latency per call" value={x.llmMs} onChange={set("llmMs")} suffix="ms" prov={llmProv(measured.llm.llm_ms, "mean")} />
@@ -102,8 +106,15 @@ export function RoiPage({ config, measured, threshold, setThreshold }: Props) {
           <p className="hint">{x.lakebaseAlwaysOn
             ? "Billed every hour; never scales to zero. Cheaper when traffic runs all day."
             : "Billed only for active hours; scales to zero when idle. Pays off only if traffic stops for long stretches."}</p>
-          <NumberField label="Average compute units" value={x.lakebaseCu} onChange={set("lakebaseCu")} step={0.5} min={0.5}
-                       prov={{ kind: "input" }} />
+          <NumberField label="Compute units" value={cu} onChange={(v) => { setCuAuto(false); set("lakebaseCu")(v); }}
+                       step={0.5} min={0.5}
+                       prov={cuAuto ? { kind: "assumption", text: "sized to keep the index in memory" } : { kind: "input" }} />
+          <p className="hint">
+            At {count(x.cacheEntries)} entries the HNSW index is ≈{indexGb(x.cacheEntries).toFixed(1)} GB (8.2 KB per entry,
+            measured in 03b). Keeping it in memory takes ≥{minCu} CU (~2 GB RAM per CU, half for the index).
+            {!cuAuto && cu < minCu && <> <b>Below that, lookups read from storage and slow down.</b></>}
+            {!cuAuto && <> <button type="button" className="link" onClick={() => setCuAuto(true)}>Size to the cache</button></>}
+          </p>
           {x.lakebaseAlwaysOn
             ? <NumberField label="Always-on price" value={x.alwaysOnCuHourPrice} onChange={set("alwaysOnCuHourPrice")} step={0.001}
                            suffix="$/CU-hour" prov={{ kind: "price", text: "Lakebase always-on, list" }} />
@@ -114,9 +125,9 @@ export function RoiPage({ config, measured, threshold, setThreshold }: Props) {
                              suffix="$/CU-hour" prov={{ kind: "price", text: "Lakebase autoscaling, list" }} />
               </>}
           <NumberField label="Cache entries" value={x.cacheEntries} onChange={set("cacheEntries")} step={10000} min={0}
-                       prov={{ kind: "input" }} />
+                       prov={{ kind: "assumption", text: "about a month of misses (30-day TTL)" }} />
           <NumberField label="Storage per entry" value={x.bytesPerEntry} onChange={set("bytesPerEntry")} step={1000}
-                       suffix="bytes" prov={{ kind: "assumption", text: "1024-d vector ×2 (table + HNSW) + text" }} />
+                       suffix="bytes" prov={{ kind: "assumption", text: "8.2 KB index (03b) + ~4.7 KB row (vector + text)" }} />
           <NumberField label="Storage price" value={x.storagePerGbMonth} onChange={set("storagePerGbMonth")} step={0.005}
                        suffix="$/GB-month" prov={{ kind: "price", text: "storage $0.345 + PITR $0.200, list" }} />
         </Card>

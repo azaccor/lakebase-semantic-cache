@@ -25,8 +25,8 @@ dbutils.widgets.text("pg_schema", "semantic_cache")   # Postgres schema for the 
 dbutils.widgets.text("embedding_endpoint", "databricks-qwen3-embedding-0-6b")
 dbutils.widgets.text("llm_endpoint", "databricks-claude-opus-4-8")
 # USD per 1M tokens: list-price assumptions for cost estimates; adjust to your contract.
-dbutils.widgets.text("price_in_per_m", "15")
-dbutils.widgets.text("price_out_per_m", "75")
+dbutils.widgets.text("price_in_per_m", "5")
+dbutils.widgets.text("price_out_per_m", "25")
 
 # COMMAND ----------
 

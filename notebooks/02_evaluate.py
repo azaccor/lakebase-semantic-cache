@@ -33,6 +33,8 @@ dbutils.widgets.text("pg_schema", "semantic_cache")
 dbutils.widgets.text("embedding_endpoint", "databricks-qwen3-embedding-0-6b")
 dbutils.widgets.text("llm_endpoint", "databricks-claude-opus-4-8")
 dbutils.widgets.text("threshold", "0.75")
+dbutils.widgets.text("price_in_per_m", "5")     # $ per 1M tokens, list price of the llm_endpoint
+dbutils.widgets.text("price_out_per_m", "25")
 
 # COMMAND ----------
 
@@ -269,7 +271,9 @@ events = (spark.table(f"{catalog}.{schema}.cache_events")
           .where("NOT hit AND input_tokens > 0")
           .where(f"scope['model'] = '{scope['model']}' AND scope['prompt_version'] = '{scope['prompt_version']}'")
           .toPandas())
-llm_ms, llm_cost, write_ms = events["generate_ms"].mean(), events["cost_usd"].mean(), events["write_ms"].mean()
+price_in, price_out = float(dbutils.widgets.get("price_in_per_m")), float(dbutils.widgets.get("price_out_per_m"))
+llm_ms, write_ms = events["generate_ms"].mean(), events["write_ms"].mean()
+llm_cost = (events["input_tokens"].mean() * price_in + events["output_tokens"].mean() * price_out) / 1e6
 
 summary = []
 for b in backends:

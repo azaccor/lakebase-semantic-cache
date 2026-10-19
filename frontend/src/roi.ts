@@ -46,6 +46,23 @@ export type RoiInputs = {
 
 export const HOURS_PER_MONTH = 730;
 
+// Lakebase sizing. Fast lookups need the HNSW index in memory: 03b_load_test measured 8.2 KB of index
+// per entry (1024-d vectors, m = 16), i.e. 8.2 GB at 1M entries. A CU has ~2 GB of RAM; half of it is
+// left for Postgres itself, connections and table pages (an assumption).
+export const INDEX_BYTES_PER_ENTRY = 8_200;
+export const RAM_GB_PER_CU = 2;
+export const INDEX_RAM_SHARE = 0.5;
+
+export function indexGb(entries: number): number {
+  return (entries * INDEX_BYTES_PER_ENTRY) / 1e9;
+}
+
+/** Smallest compute size (0.5 CU, then whole CUs) that keeps the index for `entries` in memory. */
+export function requiredCu(entries: number): number {
+  const cu = indexGb(entries) / (RAM_GB_PER_CU * INDEX_RAM_SHARE);
+  return cu <= 0.5 ? 0.5 : Math.ceil(cu);
+}
+
 /** Linear interpolation over the sweep; clamps outside the measured range. */
 type RateKey = "cacheable_hit_rate" | "precision" | "cacheable_false_hit_rate" | "novel_hit_rate";
 

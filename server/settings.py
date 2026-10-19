@@ -30,8 +30,8 @@ class Settings:
     app_tenant: str = field(default_factory=lambda: _env("APP_TENANT", "app"))
     threshold: float = field(default_factory=lambda: float(_env("SIMILARITY_THRESHOLD", "0.75")))
     # USD per 1M tokens: the same list-price assumptions as 01_build_cache; adjust to your contract.
-    price_in_per_m: float = field(default_factory=lambda: float(_env("PRICE_IN_PER_M", "15")))
-    price_out_per_m: float = field(default_factory=lambda: float(_env("PRICE_OUT_PER_M", "75")))
+    price_in_per_m: float = field(default_factory=lambda: float(_env("PRICE_IN_PER_M", "5")))
+    price_out_per_m: float = field(default_factory=lambda: float(_env("PRICE_OUT_PER_M", "25")))
 
     def table(self, name: str) -> str:
         return f"{self.catalog}.{self.schema}.{name}"
