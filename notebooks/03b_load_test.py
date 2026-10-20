@@ -2,7 +2,7 @@
 # MAGIC %md
 # MAGIC # 03b · Load test
 # MAGIC
-# MAGIC How do the two backends behave as the cache grows? At each cache size (1K → 1M entries) this
+# MAGIC How do the two backends behave as the cache grows? At each cache size (1K → 100K entries by default, up to 1M with a larger `scale_rows`) this
 # MAGIC notebook measures, for `pgvector` (HNSW) and `lakebase_search` (`lakebase_ann`, IVF + RaBitQ):
 # MAGIC
 # MAGIC 1. **Index build:** time and size after a bulk load.
@@ -19,7 +19,8 @@
 # MAGIC    embedding call (~200 ms) for end-to-end lookup latency. Each backend gets a 15 s untimed warm-up
 # MAGIC    first, and the query plan of the lookup is recorded so you can see which index served it.
 # MAGIC
-# MAGIC Distractors come from `03a_scale_data` (run it first with `target_rows` ≥ the largest size).
+# MAGIC Distractors come from `gold_scale_embeddings`, built by the `semantic_cache_ingest` pipeline (its
+# MAGIC `scale_rows` setting must be ≥ the largest size; larger sizes are skipped).
 # MAGIC Sizes are cumulative: each step appends rows to both tables and rebuilds the indexes. The tables are
 # MAGIC load-test copies (`cache_entries_<backend>_loadtest`) seeded with the live cache's FAQ entries.
 # MAGIC Lakebase compute autoscales (CU range set on the project), so note it when comparing runs; the
@@ -34,7 +35,7 @@ dbutils.widgets.text("lakebase_instance", "semantic-cache")
 dbutils.widgets.text("backends", "pgvector,lakebase_search")
 dbutils.widgets.text("embedding_endpoint", "databricks-qwen3-embedding-0-6b")
 dbutils.widgets.text("llm_endpoint", "databricks-claude-opus-4-8")
-dbutils.widgets.text("sizes", "1000,10000,100000,1000000")
+dbutils.widgets.text("sizes", "1000,10000,100000")
 dbutils.widgets.text("concurrency", "1,4,16,32")
 dbutils.widgets.text("duration_s", "30")
 dbutils.widgets.text("index_build_mem", "4GB")
@@ -66,7 +67,7 @@ backends = [b.strip() for b in dbutils.widgets.get("backends").split(",") if b.s
 concurrency = [int(c) for c in dbutils.widgets.get("concurrency").split(",")]
 duration_s = int(dbutils.widgets.get("duration_s"))
 threshold = float(dbutils.widgets.get("threshold"))
-embedded_table = f"{catalog}.{schema}.scale_embeddings"
+embedded_table = f"{catalog}.{schema}.gold_scale_embeddings"
 run_id = str(uuid.uuid4())
 
 available = spark.sql(f"SELECT count(*) AS n FROM {embedded_table} WHERE NOT holdout").first()["n"]

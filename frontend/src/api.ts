@@ -94,6 +94,15 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
   return resp.json() as Promise<T>;
 }
 
+export type GenieQuery = {
+  title: string | null; description: string | null; sql: string | null;
+  columns: string[]; rows: (string | null)[][]; row_count: number;
+};
+export type GenieAnswer = {
+  conversation_id: string; message_id: string; status: string | null; error: string | null;
+  text: string[]; queries: GenieQuery[]; suggested_questions: string[];
+};
+
 const post = <T>(path: string, body: unknown) => call<T>(path, { method: "POST", body: JSON.stringify(body) });
 
 export const api = {
@@ -106,4 +115,7 @@ export const api = {
   judgeRun: (n: number, sources: string[]) => post<{ job_id: string }>("/api/judge/run", { n, sources }),
   judgeJob: (id: string) => call<JudgeJob>(`/api/judge/job/${id}`),
   judgeResults: () => call<JudgeSummary>("/api/judge/results"),
+  genieConfig: () => call<{ enabled: boolean; space_id: string | null }>("/api/genie/config"),
+  genieAsk: (question: string, conversation_id: string | null) =>
+    post<GenieAnswer>("/api/genie/ask", { question, conversation_id }),
 };

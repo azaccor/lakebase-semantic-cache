@@ -32,6 +32,8 @@ class Settings:
     # USD per 1M tokens: the same list-price assumptions as 01_build_cache; adjust to your contract.
     price_in_per_m: float = field(default_factory=lambda: float(_env("PRICE_IN_PER_M", "5")))
     price_out_per_m: float = field(default_factory=lambda: float(_env("PRICE_OUT_PER_M", "25")))
+    # The Genie space over the gold metrics (app resource genie-space); empty disables the Genie tab.
+    genie_space_id: str = field(default_factory=lambda: _env("GENIE_SPACE_ID", ""))
 
     def table(self, name: str) -> str:
         return f"{self.catalog}.{self.schema}.{name}"

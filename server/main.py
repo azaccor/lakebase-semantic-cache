@@ -1,4 +1,4 @@
-"""Semantic cache demo app: ROI calculator, playground, and false-hit judge.
+"""Semantic cache demo app: ROI calculator, playground, false-hit judge, and Ask Genie.
 
 The cache logic is the repo's ``semantic_cache`` package, unchanged; this module only wires
 it to HTTP. Runs as the app's service principal (Lakebase OAuth, serving endpoints, SQL warehouse).
@@ -6,7 +6,6 @@ it to HTTP. Runs as the app's service principal (Lakebase OAuth, serving endpoin
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
 import os
 import random
@@ -23,6 +22,7 @@ from pydantic import BaseModel, Field
 from semantic_cache import CacheConfig, SemanticCache, chat_generator
 
 from .event_log import EventLog
+from .genie import GenieChat
 from .judge import Judge
 from .measured import Measured
 from .settings import ROOT, Settings
@@ -50,10 +50,12 @@ async def lifespan(_: FastAPI):
     cache = SemanticCache(cfg, workspace_client=w)
     wh = Warehouse(w, S.warehouse_id)
     generate = chat_generator(S.llm_endpoint, system_prompt=system_prompt, workspace_client=w, max_tokens=400)
-    with open(ROOT / "data" / "question_bank.json") as f:
-        bank = json.load(f)
+    # The labeled evaluation set, as the semantic_cache_ingest pipeline built it.
+    eval_queries = [{"question": r["question"], "expected_intent": r["expected_intent"], "cacheable": r["cacheable"] == "true"}
+                    for r in wh.query(f"SELECT question, expected_intent, cacheable FROM {S.table('silver_eval_questions')} "
+                                      "ORDER BY question")]
     STATE.update(
-        w=w, cache=cache, generate=generate, bank=bank,
+        w=w, cache=cache, generate=generate, eval_queries=eval_queries, genie=GenieChat(w, S.genie_space_id),
         # Replayed eval traffic must not count as real hits on the seeded entries.
         replay_cache=SemanticCache(replace(cfg, track_hits=False), backend=cache.backend, workspace_client=w),
         # Same scope as 01_build_cache (model + prompt hash); tenant varies, see scopes().
@@ -120,14 +122,9 @@ def ask(body: AskIn):
 
 
 def _bank_queries() -> list[dict]:
-    out = []
-    for i in STATE["bank"]["intents"]:
-        if i["cacheable"]:
-            out += [{"question": p, "expected_intent": i["intent_id"], "cacheable": True} for p in i["paraphrases"]]
-        else:   # account-specific: any hit serves a generic, wrong answer
-            out += [{"question": q, "expected_intent": None, "cacheable": False}
-                    for q in [i["canonical_question"], *i["paraphrases"]]]
-    return out
+    """Labeled paraphrases (expected_intent = their FAQ) and account-specific probes (expected_intent
+    None: any hit serves a generic, wrong answer), from silver_eval_questions."""
+    return STATE["eval_queries"]
 
 
 @app.get("/api/sample-question")
@@ -195,6 +192,25 @@ def judge_job(job_id: str):
 @app.get("/api/judge/results")
 def judge_results():
     return STATE["judge"].summary()
+
+
+# --- Ask Genie -----------------------------------------------------------------------
+class GenieIn(BaseModel):
+    question: str = Field(min_length=1, max_length=1000)
+    conversation_id: str | None = None
+
+
+@app.get("/api/genie/config")
+def genie_config():
+    return {"enabled": bool(S.genie_space_id), "space_id": S.genie_space_id or None}
+
+
+@app.post("/api/genie/ask")
+def genie_ask(body: GenieIn):
+    try:
+        return STATE["genie"].ask(body.question.strip(), body.conversation_id)
+    except RuntimeError as e:
+        raise HTTPException(status_code=409, detail=str(e))
 
 
 # --- UI ------------------------------------------------------------------------------

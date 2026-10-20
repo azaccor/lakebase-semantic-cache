@@ -1,0 +1,96 @@
+# Genie space over the governed cache KPIs (semantic_cache_metrics pipeline): a support leader asks
+# in plain English and gets SQL-backed answers. The app's "Ask Genie" tab talks to this space.
+# Every id-keyed list is sorted by id, and tables by identifier (the Genie API requires it).
+resources:
+  genie_spaces:
+    cache_insights:
+      title: Lux Pay semantic cache insights
+      description: >-
+        Ask about the support assistant's semantic cache: deflection, cost per question, latency,
+        wrong answers measured by the LLM judge, the cost-versus-accuracy threshold curve, and which
+        FAQ categories are risky to cache.
+      warehouse_id: ${var.warehouse_id}
+      serialized_space:
+        version: 2
+        config:
+          sample_questions:
+            - id: "a0000000000000000000000000000001"
+              question: ["What was our deflection rate and cost per question last week?"]
+            - id: "a0000000000000000000000000000002"
+              question: ["Is the false-hit monitor OK right now?"]
+            - id: "a0000000000000000000000000000003"
+              question: ["Which FAQ categories get the most wrong answers at a 0.75 threshold?"]
+            - id: "a0000000000000000000000000000004"
+              question: ["How many repeat questions would we catch at 0.70 vs 0.80, and how many wrong answers?"]
+            - id: "a0000000000000000000000000000005"
+              question: ["Show the cached answers the judge marked wrong"]
+        data_sources:
+          tables:
+            - identifier: ${var.catalog}.${var.schema}.gold_cache_daily
+              column_configs:
+                - {column_name: category, enable_entity_matching: true, enable_format_assistance: true}
+                - column_name: cost_per_question_usd
+                  description: ["Modeled LLM cost per question with the cache: misses pay a full LLM call, hits only an embedding."]
+                  synonyms: ["cost per contact", "AI cost per question"]
+                - column_name: deflection_rate
+                  description: ["Share of questions answered from the cache, with no LLM call."]
+                  synonyms: ["hit rate", "cache hit rate", "deflection"]
+                - {column_name: traffic_type, enable_entity_matching: true, enable_format_assistance: true}
+            - identifier: ${var.catalog}.${var.schema}.gold_category_risk
+              column_configs:
+                - {column_name: category, enable_entity_matching: true, enable_format_assistance: true}
+            - identifier: ${var.catalog}.${var.schema}.gold_false_hit_monitor
+            - identifier: ${var.catalog}.${var.schema}.gold_judge_daily
+              column_configs:
+                - column_name: false_hit_rate
+                  description: ["Share of judged cache hits whose cached answer does not correctly answer the user's question."]
+                  synonyms: ["wrong answer rate", "false hits"]
+            - identifier: ${var.catalog}.${var.schema}.gold_threshold_curve
+            - identifier: ${var.catalog}.${var.schema}.judge_results
+              column_configs:
+                - {column_name: event_key, exclude: true}
+                - {column_name: verdict, enable_entity_matching: true, enable_format_assistance: true}
+            - identifier: ${var.catalog}.${var.schema}.silver_faq_intents
+              column_configs:
+                - {column_name: category, enable_entity_matching: true, enable_format_assistance: true}
+        instructions:
+          text_instructions:
+            - id: "b0000000000000000000000000000001"
+              content:
+                - "Lux Pay is a (fictional) consumer P2P money app. Its support assistant answers questions with Claude Opus 4.8; a semantic cache in front of it serves a stored answer when a new question is similar enough (cosine similarity at or above the threshold, 0.75 in production) to one already answered. "
+                - "Deflection rate = share of questions answered from the cache with no LLM call (column deflection_rate; also called hit rate). Cost per question = cost_per_question_usd (with the cache) vs baseline_cost_per_question_usd (without), modeled at list price ($5 / $25 per 1M input / output tokens). Use gold_cache_daily for deflection, latency, cost and savings; weight rates by requests (sum(hits) / sum(requests)), never average the daily rates. "
+                - "traffic_type in gold_cache_daily: 'live' = questions asked in the app, 'replay' = labeled evaluation questions replayed through the cache, 'seed' = the initial seeding run (exclude seed unless asked). Each system prompt has its own prompt_version and cost (the prompt sets the input tokens): always filter to is_current_prompt = true unless the user asks to compare versions. "
+                - "Wrong answers: a false hit is a cached answer that does not answer the user's question. gold_judge_daily has the LLM judge's daily false-hit rate with a 95% confidence interval (false_hit_rate_ci_low / _high); always mention the interval. judge_results has one row per judged hit (verdict = 'incorrect' are the wrong ones, with the judge's reason). gold_false_hit_monitor gives the drift status (OK, WATCH, ALERT, INSUFFICIENT_DATA) against the limit; the current one is is_current_prompt = true. "
+                - "Threshold trade-off questions: gold_threshold_curve (filter backend = 'pgvector'). repeat_caught_rate = repeat questions served from cache; wrong_rate_repeat and wrong_rate_uncached = wrong answers on repeat and on not-cached questions; the _at_50pct_repeat columns assume half of traffic repeats an FAQ. Category questions: gold_category_risk at the requested threshold (default 0.75; thresholds are 0.60 to 0.90 in steps of 0.05); money_movement = true marks payments, withdrawals, deposits, funding, limits and disputes. "
+                - "Show rates as percentages with one decimal and money in US dollars."
+          example_question_sqls:
+            - id: "c0000000000000000000000000000001"
+              question: ["What was our deflection rate and cost per question in the last 7 days?"]
+              sql:
+                - "SELECT sum(hits) / sum(requests) AS deflection_rate, sum(llm_cost_usd) / sum(requests) AS cost_per_question_usd, sum(baseline_llm_cost_usd) / sum(requests) AS baseline_cost_per_question_usd, sum(savings_usd) AS savings_usd, sum(requests) AS requests "
+                - "FROM ${var.catalog}.${var.schema}.gold_cache_daily "
+                - "WHERE traffic_type <> 'seed' AND is_current_prompt AND event_date >= date_sub(current_date(), 7)"
+            - id: "c0000000000000000000000000000002"
+              question: ["What is the judged false-hit rate for the current prompt?"]
+              sql:
+                - "SELECT prompt_version, status, judged, judged_incorrect, false_hit_rate, ci_low, ci_high, false_hit_limit, recommended_action "
+                - "FROM ${var.catalog}.${var.schema}.gold_false_hit_monitor WHERE is_current_prompt"
+            - id: "c0000000000000000000000000000003"
+              question: ["Which categories are riskiest to cache at 0.75?"]
+              sql:
+                - "SELECT category, money_movement, questions, caught_rate, wrong_rate_cached, wrong_rate_uncached "
+                - "FROM ${var.catalog}.${var.schema}.gold_category_risk "
+                - "WHERE backend = 'pgvector' AND threshold = 0.75 ORDER BY wrong_rate_cached + wrong_rate_uncached DESC"
+            - id: "c0000000000000000000000000000004"
+              question: ["Compare thresholds 0.70, 0.75 and 0.80"]
+              sql:
+                - "SELECT threshold, repeat_caught_rate, wrong_rate_repeat, wrong_rate_uncached, hit_rate_at_50pct_repeat, wrong_per_request_at_50pct_repeat "
+                - "FROM ${var.catalog}.${var.schema}.gold_threshold_curve "
+                - "WHERE backend = 'pgvector' AND threshold IN (0.70, 0.75, 0.80) ORDER BY threshold"
+            - id: "c0000000000000000000000000000005"
+              question: ["Which cached answers did the judge mark wrong, and why?"]
+              sql:
+                - "SELECT judged_ts, question, matched_question, round(similarity, 3) AS similarity, reason "
+                - "FROM ${var.catalog}.${var.schema}.judge_results "
+                - "WHERE verdict = 'incorrect' AND prompt_version = (SELECT max_by(prompt_version, judged_ts) FROM ${var.catalog}.${var.schema}.judge_results) "
+                - "ORDER BY judged_ts DESC"

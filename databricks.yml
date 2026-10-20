@@ -1,11 +1,14 @@
-# Deploys the app in server/ + frontend/ (`databricks apps deploy`). The notebooks are not part of
-# the bundle: run them from a Git folder.
+# Deploys the app (server/ + frontend/), the Lakeflow pipelines (resources/pipelines.yml) and the
+# Lakeflow Jobs that run the notebooks (resources/jobs.yml).
 #
 # Workspace-specific values are bundle variables with placeholder defaults. Supply yours either
 # with --var, or as env vars (BUNDLE_VAR_catalog=..., BUNDLE_VAR_warehouse_id=...). The target has
 # no `host`, so the workspace comes from --profile.
 bundle:
   name: lakebase-semantic-cache
+
+include:
+  - resources/*.yml
 
 variables:
   catalog:
@@ -26,12 +29,14 @@ variables:
   embedding_endpoint:
     description: Embedding endpoint (1024-d by default; see CacheConfig.dimensions)
     default: databricks-qwen3-embedding-0-6b
+  sdk_wheel:
+    description: databricks-lakebase-adapters wheel on a UC Volume, installed by the notebooks
+    default: /Volumes/main/semantic_cache/libs/databricks_lakebase_adapters-<version>-py3-none-any.whl
 
 sync:
   include:
     - wheels/*.whl          # gitignored, but the app installs the SDK from it
   exclude:
-    - notebooks/**
     - .venv/**
     - .node/**
     - node_modules/**
@@ -63,6 +68,8 @@ resources:
             value_from: embedding-endpoint
           - name: DATABRICKS_WAREHOUSE_ID
             value_from: sql-warehouse
+          - name: GENIE_SPACE_ID
+            value_from: genie-space
       resources:
         - name: llm-endpoint
           serving_endpoint:
@@ -76,6 +83,11 @@ resources:
           sql_warehouse:
             id: ${var.warehouse_id}
             permission: CAN_USE
+        - name: genie-space
+          genie_space:
+            name: cache-insights
+            space_id: ${resources.genie_spaces.cache_insights.id}
+            permission: CAN_RUN
         - name: postgres
           postgres:
             branch: projects/${var.lakebase_project}/branches/production

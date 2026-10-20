@@ -1,0 +1,44 @@
+# Lakeflow Spark Declarative Pipelines (serverless SQL).
+resources:
+  pipelines:
+    # Raw files in the UC Volume -> bronze (Auto Loader) -> silver (cleaned, labeled, expectations)
+    # -> gold embeddings. 01_build_cache, 02_evaluate and the app read the silver tables;
+    # 03b_load_test reads gold_scale_embeddings.
+    semantic_cache_ingest:
+      name: semantic_cache_ingest
+      catalog: ${var.catalog}
+      schema: ${var.schema}
+      serverless: true
+      continuous: false
+      photon: true
+      libraries:
+        - glob:
+            include: ../pipelines/ingest/**
+      configuration:
+        raw_path: /Volumes/${var.catalog}/${var.schema}/raw
+        embedding_endpoint: ${var.embedding_endpoint}
+        scale_rows: "100000"      # load-test distractors to embed (1 CU holds ~120K entries)
+        holdout_rows: "2000"      # never-loaded questions used as miss traffic
+
+    # The governed KPIs, from what the cache, 02_evaluate and the judge write: daily deflection and
+    # cost per question, judged false-hit rate and its drift monitor, the threshold curve, and risk
+    # by FAQ category. The Genie space and the app read these.
+    semantic_cache_metrics:
+      name: semantic_cache_metrics
+      catalog: ${var.catalog}
+      schema: ${var.schema}
+      serverless: true
+      continuous: false
+      photon: true
+      libraries:
+        - glob:
+            include: ../pipelines/metrics/**
+      configuration:
+        catalog: ${var.catalog}
+        schema: ${var.schema}
+        price_in_per_m: "5"                   # databricks-claude-opus-4-8 list price, $ per 1M input tokens
+        price_out_per_m: "25"                 # ... per 1M output tokens
+        embed_cost_per_question: "0.0000004"  # ~20 tokens at $0.02 per 1M (Qwen3 embedding)
+        false_hit_limit: "0.10"               # judged false-hit rate the monitor alerts above
+        monitor_window_days: "30"
+        monitor_min_judged: "20"

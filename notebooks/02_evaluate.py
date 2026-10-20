@@ -8,7 +8,7 @@
 # MAGIC
 # MAGIC How much would the cache save, and how often would it serve a wrong answer?
 # MAGIC
-# MAGIC 1. **Queries:** the 173 held-out paraphrases of the seeded FAQs, plus the
+# MAGIC 1. **Queries** (`silver_eval_questions`): the 167 held-out paraphrases of the seeded FAQs, plus the
 # MAGIC    account-specific questions (`cacheable: false`), which should *never* hit.
 # MAGIC 2. **Lookup:** each query is embedded once and looked up on every backend, recording the
 # MAGIC    nearest in-scope entry and its similarity (no threshold applied yet; nothing is written).
@@ -107,17 +107,10 @@ for b, c in caches.items():
 
 # COMMAND ----------
 
-with open("../data/question_bank.json") as f:
-    bank = json.load(f)
-
-queries = []
-for i in bank["intents"]:
-    if i["cacheable"]:
-        queries += [{"question": p, "expected_intent": i["intent_id"], "cacheable": True} for p in i["paraphrases"]]
-    else:
-        # Account-specific: any hit would serve a generic (wrong) answer.
-        queries += [{"question": q, "expected_intent": None, "cacheable": False}
-                    for q in [i["canonical_question"], *i["paraphrases"]]]
+# Built by the semantic_cache_ingest pipeline: paraphrases labeled with their FAQ, and account-specific
+# probes (expected_intent NULL), where any hit would serve a generic (wrong) answer.
+queries = [r.asDict() for r in spark.table(f"{catalog}.{schema}.silver_eval_questions")
+           .select("question", "expected_intent", "cacheable").orderBy("question").collect()]
 qdf = pd.DataFrame(queries)
 qdf.groupby("cacheable").size()
 

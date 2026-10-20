@@ -1,0 +1,81 @@
+# Lakeflow Jobs (serverless). Job parameters reach every notebook task as widgets.
+resources:
+  jobs:
+    # End to end: land raw files -> ingest pipeline -> cache table -> seed -> evaluate -> metrics pipeline.
+    semantic_cache_end_to_end:
+      name: semantic_cache_end_to_end
+      max_concurrent_runs: 1
+      parameters:
+        - {name: catalog, default: "${var.catalog}"}
+        - {name: schema, default: "${var.schema}"}
+        - {name: lakebase_instance, default: "${var.lakebase_project}"}
+        - {name: pg_schema, default: semantic_cache}
+        - {name: sdk_wheel, default: "${var.sdk_wheel}"}
+        - {name: llm_endpoint, default: "${var.llm_endpoint}"}
+        - {name: embedding_endpoint, default: "${var.embedding_endpoint}"}
+        - {name: backend, default: pgvector}
+        - {name: backends, default: pgvector}
+      tasks:
+        - task_key: land_raw
+          max_retries: 1
+          notebook_task:
+            notebook_path: ../notebooks/00a_land_raw.py
+        - task_key: ingest
+          depends_on: [{task_key: land_raw}]
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.semantic_cache_ingest.id}
+        - task_key: setup_cache_table
+          max_retries: 1
+          notebook_task:
+            notebook_path: ../notebooks/00_setup.py
+        - task_key: seed_cache
+          depends_on: [{task_key: ingest}, {task_key: setup_cache_table}]
+          max_retries: 1          # serverless Python has aborted once at startup; the seed is idempotent
+          notebook_task:
+            notebook_path: ../notebooks/01_build_cache.py
+        - task_key: evaluate
+          depends_on: [{task_key: seed_cache}]
+          max_retries: 1
+          notebook_task:
+            notebook_path: ../notebooks/02_evaluate.py
+        - task_key: metrics
+          depends_on: [{task_key: evaluate}]
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.semantic_cache_metrics.id}
+      schedule:
+        quartz_cron_expression: "0 0 6 ? * MON"   # weekly re-evaluation; unpause to enable
+        timezone_id: UTC
+        pause_status: PAUSED
+
+    # Daily refresh of the gold KPIs and the false-hit drift monitor.
+    semantic_cache_monitor:
+      name: semantic_cache_monitor
+      tasks:
+        - task_key: metrics
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.semantic_cache_metrics.id}
+      schedule:
+        quartz_cron_expression: "0 0 7 * * ?"
+        timezone_id: UTC
+        pause_status: PAUSED
+
+    # 1K -> 1M entry load test on gold_scale_embeddings (run on demand; record the endpoint's CU range).
+    semantic_cache_load_test:
+      name: semantic_cache_load_test
+      max_concurrent_runs: 1
+      parameters:
+        - {name: catalog, default: "${var.catalog}"}
+        - {name: schema, default: "${var.schema}"}
+        - {name: lakebase_instance, default: "${var.lakebase_project}"}
+        - {name: sdk_wheel, default: "${var.sdk_wheel}"}
+        - {name: llm_endpoint, default: "${var.llm_endpoint}"}
+        - {name: embedding_endpoint, default: "${var.embedding_endpoint}"}
+        - {name: backends, default: pgvector}
+        - {name: sizes, default: "1000,10000,100000"}
+        - {name: index_build_mem, default: 1GB}
+        - {name: lakebase_cu, default: "1"}
+      tasks:
+        - task_key: load_test
+          max_retries: 1
+          notebook_task:
+            notebook_path: ../notebooks/03b_load_test.py

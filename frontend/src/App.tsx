@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "./api";
 import type { Config, Measured } from "./api";
 import { ErrorBox, Skeleton } from "./components/ui";
+import { GeniePage } from "./pages/Genie";
 import { JudgePage } from "./pages/Judge";
 import { PlaygroundPage } from "./pages/Playground";
 import { RoiPage } from "./pages/Roi";
@@ -10,6 +11,7 @@ const TABS = [
   { key: "roi", label: "ROI calculator" },
   { key: "playground", label: "Playground" },
   { key: "judge", label: "False-hit judge" },
+  { key: "genie", label: "Ask Genie" },
 ] as const;
 type Tab = (typeof TABS)[number]["key"];
 
@@ -65,6 +67,7 @@ export function App() {
             {tab === "roi" && <RoiPage config={config} measured={measured} threshold={threshold} setThreshold={setThreshold} />}
             {tab === "playground" && <PlaygroundPage config={config} measured={measured} threshold={threshold} setThreshold={setThreshold} />}
             {tab === "judge" && <JudgePage />}
+            {tab === "genie" && <GeniePage />}
           </>
         )}
       </main>

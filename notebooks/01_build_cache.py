@@ -6,9 +6,10 @@
 # MAGIC **via the cache itself** (`get_or_generate`), so seeding exercises the same code path as
 # MAGIC live traffic and every request is logged to the `cache_events` Delta table.
 # MAGIC
-# MAGIC - **Dataset:** `data/question_bank.json`: 50 support FAQs for Lux Pay, a fictional consumer P2P money app,
-# MAGIC   each with a canonical question, held-out paraphrases (used in `02_evaluate`) and a reference answer.
-# MAGIC   Two account-specific intents are marked `cacheable: false` and are *not* seeded.
+# MAGIC - **Dataset:** `silver_faq_intents`, built by the `semantic_cache_ingest` Lakeflow pipeline from the raw
+# MAGIC   question bank: 50 support FAQs for Lux Pay, a fictional consumer P2P money app, each with a canonical
+# MAGIC   question, a category and a reference answer (its held-out paraphrases are `silver_eval_questions`, used
+# MAGIC   in `02_evaluate`). Two account-specific intents are marked `cacheable = false` and are *not* seeded.
 # MAGIC - **Scope:** every entry is tagged with the model and a `prompt_version` derived from a hash of
 # MAGIC   the system prompt, so editing the prompt automatically starts a fresh cache partition.
 # MAGIC - **Idempotent:** seeding uses a 0.99 threshold, so only an (almost) identical question counts as
@@ -69,10 +70,9 @@ scope
 
 # COMMAND ----------
 
-with open("../data/question_bank.json") as f:
-    bank = json.load(f)
-seed = [i for i in bank["intents"] if i["cacheable"]]
-print(f"{bank['persona']}: {len(seed)} cacheable intents to seed")
+seed = [r.asDict() for r in spark.table(f"{catalog}.{schema}.silver_faq_intents")
+        .where("cacheable").orderBy("intent_id").collect()]
+print(f"{len(seed)} cacheable intents to seed, from {catalog}.{schema}.silver_faq_intents")
 
 # COMMAND ----------
 

@@ -66,22 +66,69 @@ res = cache.get_or_generate("How do I reset my password?", answer_with_llm,
 res.hit, res.similarity, res.answer
 ```
 
+## Data journey
+
+```
+ data/question_bank.json ─┐                       ┌─ Lakeflow pipeline: semantic_cache_ingest (serverless SQL)
+ Bitext + GooAQ (public) ─┴─► UC Volume raw/ ─────┤   bronze_*  (Auto Loader: read_files)
+     (00a_land_raw)                               │   silver_faq_intents · silver_eval_questions · silver_public_questions  (expectations)
+                                                  └─► gold_scale_embeddings  (ai_query() embeddings)
+                                                            │
+ 01_build_cache ── seeds Lakebase (pgvector HNSW) from silver_faq_intents; every request ─► cache_events (Delta)
+ 02_evaluate ───── replays silver_eval_questions ─► eval_lookups · eval_threshold_sweep · eval_summary
+ App ───────────── live questions, replay, LLM judge ─► cache_events · judge_results
+                                                            │
+                     Lakeflow pipeline: semantic_cache_metrics ─► gold_cache_daily · gold_judge_daily ·
+                     gold_false_hit_monitor · gold_threshold_curve · gold_category_risk
+                                                            │
+                     Genie space "Lux Pay semantic cache insights" + the app's ROI calculator and Ask Genie tab
+```
+
+Everything above is defined in this repo's bundle: the app (`databricks.yml`), the two pipelines
+(`resources/pipelines.yml`, SQL in `pipelines/`), the Lakeflow Jobs that run them with the notebooks
+(`resources/jobs.yml`), and the Genie space (`resources/genie.yml`).
+
+| Lakeflow construct | What it does |
+|---|---|
+| Job `semantic_cache_end_to_end` | `land_raw` → `ingest` pipeline → `setup_cache_table` → `seed_cache` → `evaluate` → `metrics` pipeline (serverless; weekly schedule, paused) |
+| Pipeline `semantic_cache_ingest` | Raw files → bronze streaming tables (Auto Loader) → silver FAQs, labeled evaluation questions and cleaned public questions (with expectations) → `gold_scale_embeddings` (`ai_query()`) |
+| Pipeline `semantic_cache_metrics` | Governed KPIs: daily deflection and cost per question, judged false-hit rate (Wilson 95% interval), a false-hit **drift monitor** against a limit, the threshold curve, and risk by FAQ category (money-movement flagged) |
+| Job `semantic_cache_monitor` | Daily refresh of the metrics pipeline (paused) |
+| Job `semantic_cache_load_test` | `03b_load_test` on `gold_scale_embeddings`, recording the Lakebase CU size |
+
 ## Getting started
 
-1. Add this repo as a Git folder in your workspace (Workspace → Create → Git folder).
-2. Upload the `databricks-lakebase-adapters` wheel to a UC Volume and point `00_setup`'s `sdk_wheel` widget at it.
-3. Set each notebook's `catalog`, `schema` and `lakebase_instance` widgets to your own (the defaults are
-   placeholders), then run the notebooks in order on serverless.
+1. Upload the `databricks-lakebase-adapters` wheel to a UC Volume (for the notebooks) and copy it into `wheels/`
+   (gitignored; the bundle syncs it for the app).
+2. Deploy and run with your workspace values (the bundle variables default to placeholders):
+
+```bash
+export BUNDLE_VAR_catalog=<catalog> BUNDLE_VAR_warehouse_id=<warehouse-id> \
+       BUNDLE_VAR_lakebase_project=<lakebase-project> BUNDLE_VAR_sdk_wheel=/Volumes/<catalog>/semantic_cache/libs/<wheel>.whl
+databricks bundle deploy -t dev --profile <profile>        # first time: the Genie space fails until its tables exist
+databricks bundle run semantic_cache_end_to_end -t dev --profile <profile>
+databricks bundle deploy -t dev --profile <profile>        # now creates the Genie space and attaches it to the app
+databricks apps deploy -t dev --skip-validation --profile <profile>
+```
+
+`--skip-validation` skips the local Node build; the platform runs `npm install && npm run build` itself.
 
 ## Notebooks
 
 | Notebook | |
 |---|---|
+| `00a_land_raw` | Land the raw files in a UC Volume: the question bank and the public Bitext + GooAQ datasets |
 | `00_setup` | Install the SDK, create the cache table + index, smoke test |
-| `01_build_cache` | Seed the cache with FAQ answers from the LLM (through the cache); log every request to `cache_events` |
-| `02_evaluate` | Replay held-out paraphrases on each backend: threshold sweep (hit rate / precision / false hits), latency and cost vs. no cache |
-| `03a_scale_data` | Download Bitext (banking) + GooAQ questions, embed up to 1M with `ai_query()` for the load test |
-| `03b_load_test` | 1K → 1M entries on both backends: index build, ANN quality vs exact search, cache accuracy, latency/QPS under concurrency |
+| `01_build_cache` | Seed the cache with FAQ answers from the LLM (through the cache), from `silver_faq_intents`; log every request to `cache_events` |
+| `02_evaluate` | Replay `silver_eval_questions` on each backend: threshold sweep with leave-one-FAQ-out false-hit rates, latency and cost vs. no cache |
+| `03b_load_test` | 1K → 100K entries (1M with a larger `scale_rows`) on both backends: index build, ANN quality vs exact search, cache accuracy, latency/QPS under concurrency |
+
+## Evidence
+
+[`evidence/`](evidence/README.md) holds readable output from real runs, exported by `scripts/export_evidence.py`:
+every notebook task's code and printed output, each pipeline update's row counts and expectation results,
+snapshots of the governed tables, and responses recorded from the deployed app (including Ask Genie).
+The figures in the deck trace back to these files.
 
 ## App
 
@@ -95,23 +142,14 @@ A Databricks App (FastAPI + React) on the same module and cache table:
 - **False-hit judge**: for a sample of hits, the LLM writes a fresh answer and judges whether the cached one
   answers the question. Gives a measured false-hit rate (with a 95% CI) and its agreement with the labels.
   Results go to `judge_results`, per judge prompt version and cache prompt version (re-seeding starts over).
+- **Ask Genie**: plain-English questions over the gold metrics through the Genie space, showing Genie's answer,
+  the result rows and the SQL it ran.
 
 Lookups search the seeded FAQs and the app's own entries; misses are cached under tenant `app`, so
 `02_evaluate`'s scope is unchanged. Requests are logged to `cache_events` (`source = 'app'` / `'app-replay'`)
 through the SQL warehouse.
 
-**Deploy** (run `01_build_cache` first; put the SDK wheel in `wheels/`, which the bundle syncs). Workspace
-values are bundle variables with placeholder defaults, so pass your own:
-
-```bash
-export BUNDLE_VAR_catalog=<catalog> BUNDLE_VAR_warehouse_id=<warehouse-id> \
-       BUNDLE_VAR_lakebase_project=<lakebase-project>
-databricks apps deploy -t dev --skip-validation --profile <profile>   # Node/Python deps install on the platform
-```
-
-`--skip-validation` skips the local Node build; the platform runs `npm install && npm run build` itself.
-
-Then grant the app's service principal (`databricks apps get lakebase-semantic-cache` → `service_principal_client_id`)
+After the first deploy (see Getting started), grant the app's service principal (`databricks apps get lakebase-semantic-cache` → `service_principal_client_id`)
 access to what the notebooks created:
 
 ```sql
@@ -127,9 +165,13 @@ GRANT SELECT, INSERT, UPDATE ON semantic_cache.cache_entries_pgvector TO "<sp-cl
 
 ```
 semantic_cache/   the module (config, backends, cache, events)
-server/           the app's FastAPI backend (ROI inputs, playground, judge)
+server/           the app's FastAPI backend (ROI inputs, playground, judge, Ask Genie)
 frontend/         the app's React UI (built on the platform by `npm run build` into server/static)
-data/             question_bank.json (50 cacheable FAQs + 2 account-specific probes, 173 held-out
+data/             question_bank.json (50 cacheable FAQs + 2 account-specific probes, 167 held-out
                   paraphrases), system_prompt.txt (its hash is part of the cache scope)
-notebooks/        Databricks notebooks (run in order)
+pipelines/        Lakeflow Spark Declarative Pipeline SQL: ingest/ (bronze → silver → gold) and metrics/ (gold KPIs)
+resources/        bundle resources: pipelines, jobs, Genie space
+notebooks/        Databricks notebooks, run by the Lakeflow Jobs
+scripts/          export_evidence.py
+evidence/         readable output from real runs
 ```
