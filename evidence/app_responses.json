@@ -1,0 +1,461 @@
+{
+  "config": {
+    "backend": "pgvector",
+    "llm_endpoint": "databricks-claude-opus-4-8",
+    "embedding_endpoint": "databricks-qwen3-embedding-0-6b",
+    "threshold": 0.75,
+    "scope": {
+      "model": "databricks-claude-opus-4-8",
+      "prompt_version": "189c61a1"
+    },
+    "app_tenant": "app",
+    "price_in_per_m": 5.0,
+    "price_out_per_m": 25.0,
+    "cache_table": "semantic_cache.cache_entries_pgvector",
+    "lakebase_instance": "<redacted>",
+    "entries": 51,
+    "total_hits": 109
+  },
+  "measured": {
+    "backend": "pgvector",
+    "llm": {
+      "source": "<catalog>.semantic_cache.cache_events",
+      "n": 53,
+      "last_ts": "2026-10-20T01:07:50.370Z",
+      "llm_ms": 1766.356996584919,
+      "llm_p50_ms": 1673.107760999983,
+      "llm_p95_ms": 2494.309147599995,
+      "input_tokens": 1876.0188679245282,
+      "output_tokens": 76.09433962264151,
+      "write_ms": 12.862028660365167
+    },
+    "overhead": {
+      "source": "<catalog>.semantic_cache.cache_events",
+      "n": 371,
+      "last_ts": "2026-10-20T01:07:50.370Z",
+      "embed_ms": 240.22523720754953,
+      "lookup_ms": 10.877886245308039,
+      "embed_p50_ms": 224.15875699971366,
+      "lookup_p50_ms": 9.567827999944711
+    },
+    "sweep": {
+      "source": "<catalog>.semantic_cache.eval_threshold_sweep",
+      "run_id": "06c73f12-0f34-4f73-b7b3-732ebd20ffb0",
+      "points": [
+        {
+          "threshold": 0.5,
+          "hit_rate": 1.0,
+          "cacheable_hit_rate": 1.0,
+          "precision": 0.7885714285714286,
+          "false_hit_rate": 0.21142857142857144,
+          "cacheable_false_hit_rate": 0.17365269461077845,
+          "novel_hit_rate": 0.96,
+          "account_specific_hits": 8.0
+        },
+        {
+          "threshold": 0.55,
+          "hit_rate": 0.9714285714285714,
+          "cacheable_hit_rate": 0.9760479041916168,
+          "precision": 0.8,
+          "false_hit_rate": 0.19428571428571428,
+          "cacheable_false_hit_rate": 0.16167664670658682,
+          "novel_hit_rate": 0.8514285714285714,
+          "account_specific_hits": 7.0
+        },
+        {
+          "threshold": 0.6,
+          "hit_rate": 0.9028571428571428,
+          "cacheable_hit_rate": 0.9101796407185628,
+          "precision": 0.8164556962025317,
+          "false_hit_rate": 0.1657142857142857,
+          "cacheable_false_hit_rate": 0.1377245508982036,
+          "novel_hit_rate": 0.6114285714285714,
+          "account_specific_hits": 6.0
+        },
+        {
+          "threshold": 0.65,
+          "hit_rate": 0.7657142857142857,
+          "cacheable_hit_rate": 0.7724550898203593,
+          "precision": 0.835820895522388,
+          "false_hit_rate": 0.12571428571428572,
+          "cacheable_false_hit_rate": 0.10179640718562874,
+          "novel_hit_rate": 0.32571428571428573,
+          "account_specific_hits": 5.0
+        },
+        {
+          "threshold": 0.7,
+          "hit_rate": 0.5085714285714286,
+          "cacheable_hit_rate": 0.5329341317365269,
+          "precision": 0.9325842696629213,
+          "false_hit_rate": 0.03428571428571429,
+          "cacheable_false_hit_rate": 0.03592814371257485,
+          "novel_hit_rate": 0.09714285714285714,
+          "account_specific_hits": 0.0
+        },
+        {
+          "threshold": 0.75,
+          "hit_rate": 0.28,
+          "cacheable_hit_rate": 0.2934131736526946,
+          "precision": 0.9591836734693877,
+          "false_hit_rate": 0.011428571428571429,
+          "cacheable_false_hit_rate": 0.011976047904191617,
+          "novel_hit_rate": 0.017142857142857144,
+          "account_specific_hits": 0.0
+        },
+        {
+          "threshold": 0.8,
+          "hit_rate": 0.10857142857142857,
+          "cacheable_hit_rate": 0.11377245508982035,
+          "precision": 0.9473684210526315,
+          "false_hit_rate": 0.005714285714285714,
+          "cacheable_false_hit_rate": 0.005988023952095809,
+          "novel_hit_rate": 0.005714285714285714,
+          "account_specific_hits": 0.0
+        },
+        {
+          "threshold": 0.85,
+          "hit_rate": 0.02857142857142857,
+          "cacheable_hit_rate": 0.029940119760479042,
+          "precision": 1.0,
+          "false_hit_rate": 0.0,
+          "cacheable_false_hit_rate": 0.0,
+          "novel_hit_rate": 0.0,
+          "account_specific_hits": 0.0
+        },
+        {
+          "threshold": 0.9,
+          "hit_rate": 0.005714285714285714,
+          "cacheable_hit_rate": 0.005988023952095809,
+          "precision": 1.0,
+          "false_hit_rate": 0.0,
+          "cacheable_false_hit_rate": 0.0,
+          "novel_hit_rate": 0.0,
+          "account_specific_hits": 0.0
+        },
+        {
+          "threshold": 0.95,
+          "hit_rate": 0.0,
+          "cacheable_hit_rate": 0.0,
+          "precision": null,
+          "false_hit_rate": 0.0,
+          "cacheable_false_hit_rate": 0.0,
+          "novel_hit_rate": 0.0,
+          "account_specific_hits": 0.0
+        }
+      ]
+    }
+  },
+  "ask_cached_paraphrase": {
+    "question": "I forgot my PIN, how can I change it?",
+    "answer": "You can change your PIN under Profile > Settings > Security. Just a reminder: Lux Pay will never ask you for your PIN, password, or sign-in codes.",
+    "hit": true,
+    "similarity": 0.861767053604126,
+    "cache_id": "e78d0084259d25bc736837eaa3831eb0",
+    "matched_question": "How do I reset my PIN?",
+    "matched_metadata": {
+      "source": "seed",
+      "category": "account_access",
+      "intent_id": "pin_reset"
+    },
+    "scope": {
+      "model": "databricks-claude-opus-4-8",
+      "prompt_version": "189c61a1",
+      "tenant": "app"
+    },
+    "threshold": 0.75,
+    "embed_ms": 271.7671839927789,
+    "lookup_ms": 10.00180900155101,
+    "generate_ms": 0.0,
+    "write_ms": 0.0,
+    "total_ms": 287.1594579919474,
+    "input_tokens": 0,
+    "output_tokens": 0
+  },
+  "ask_false_hit_example": {
+    "question": "How do I manage payment notifications?",
+    "answer": "You can manage them under **Pay > Scheduled**, where you can create, edit, or cancel scheduled and recurring payments. Recurring options include weekly, every 2 weeks, or monthly.",
+    "hit": true,
+    "similarity": 0.8041018487245399,
+    "cache_id": "3b00ff64ef1842e13b9afdac3bfd6bdc",
+    "matched_question": "How do I manage recurring or scheduled payments?",
+    "matched_metadata": {
+      "source": "seed",
+      "category": "payments",
+      "intent_id": "recurring_payments"
+    },
+    "scope": {
+      "model": "databricks-claude-opus-4-8",
+      "prompt_version": "189c61a1",
+      "tenant": "app"
+    },
+    "threshold": 0.75,
+    "embed_ms": 265.7884709915379,
+    "lookup_ms": 9.632679997594096,
+    "generate_ms": 0.0,
+    "write_ms": 0.0,
+    "total_ms": 280.81069300242234,
+    "input_tokens": 0,
+    "output_tokens": 0
+  },
+  "replay_50_at_0.75": {
+    "n": 50,
+    "hits": 16,
+    "wrong_hits": 0,
+    "threshold": 0.75
+  },
+  "judge_results": {
+    "source": "<catalog>.semantic_cache.judge_results",
+    "judge_model": "databricks-claude-opus-4-8",
+    "judge_version": "d26488e8",
+    "prompt_version": "189c61a1",
+    "last_ts": "2026-10-19T23:52:26.757Z",
+    "judged": 49,
+    "incorrect": 4,
+    "false_hit_rate": 0.08163265306122448,
+    "ci95": [
+      0.032202296241712225,
+      0.19189387041486136
+    ],
+    "labeled": 46,
+    "agreement": 0.9782608695652174,
+    "label_false_hit_rate": 0.043478260869565216,
+    "rows": [
+      {
+        "judged_ts": "2026-10-19T23:52:26.757Z",
+        "source": "app",
+        "question": "How do I change my password?",
+        "matched_question": "How do I change my password",
+        "similarity": 0.9461123033199405,
+        "threshold": 0.75,
+        "cached_answer": "You can change your password under Profile > Settings > Security. If you're locked out and can't sign in, use the \"Forgot password\" link on the sign-in screen to reset it by email.",
+        "fresh_answer": "You can change your password in Profile > Settings > Security. If you've forgotten it, use the \"Forgot password\" link on the sign-in screen to reset it by email.",
+        "verdict": "correct",
+        "reason": "The served answer correctly explains how to change the password via Profile > Settings > Security and offers the forgot-password reset option, matching what the user asked.",
+        "expected_intent": null,
+        "matched_intent": null,
+        "label_correct": null
+      },
+      {
+        "judged_ts": "2026-10-19T23:52:26.606Z",
+        "source": "app",
+        "question": "How do I change my pin?",
+        "matched_question": "How do I reset my PIN?",
+        "similarity": 0.8759565353393555,
+        "threshold": 0.75,
+        "cached_answer": "You can change your PIN under Profile > Settings > Security. Just a reminder: Lux Pay will never ask you for your PIN, password, or sign-in codes.",
+        "fresh_answer": "You can change your PIN under Profile > Settings > Security, where you'll also find options for your password, two-factor authentication, and Face ID / fingerprint login.",
+        "verdict": "correct",
+        "reason": "The served answer correctly tells the user the exact path (Profile > Settings > Security) to change their PIN, which directly addresses the question, and the added security reminder is accurate and not misleading.",
+        "expected_intent": null,
+        "matched_intent": "pin_reset",
+        "label_correct": null
+      },
+      {
+        "judged_ts": "2026-10-19T22:15:03.842Z",
+        "source": "app-replay",
+        "question": "tips to stay safe from scammers",
+        "matched_question": "How do I protect myself from scams?",
+        "similarity": 0.7513534650609933,
+        "threshold": 0.75,
+        "cached_answer": "The best protection is never sending money to someone you don't know or to \"unlock\" a prize, refund, or similar offer\u2014payments on Lux Pay are instant and can't be reversed. Also remember that Lux Pay will never ask for your PIN, password, or sign-in codes, so don't share those with anyone. If you spot a scam, report it through Profile > Support.",
+        "fresh_answer": "Here are key ways to stay safe on Lux Pay:\n\n- **Only send money to people you know and trust.** Payments are instant and can't be reversed\u2014if you're scammed, you'd have to ask the recipient to send it back voluntarily.\n- **Ignore \"unlock a prize/refund\" requests.** Anyone asking you to send money to receive money is a scammer.\n- **Never share your PIN, password or sign-in codes.** Lux Pay will never ask for these.\n\nIf you spot a scam, report it through Profile > Support. For anything else, I'm happy to help!",
+        "verdict": "correct",
+        "reason": "The served answer directly addresses how to stay safe from scammers with accurate, non-misleading guidance consistent with the reference, differing only in wording and detail.",
+        "expected_intent": "scam_protection",
+        "matched_intent": "scam_protection",
+        "label_correct": true
+      },
+      {
+        "judged_ts": "2026-10-19T22:15:01.741Z",
+        "source": "app-replay",
+        "question": "move bitcoin to my own wallet",
+        "matched_question": "How do I withdraw Bitcoin to an external wallet?",
+        "similarity": 0.7688949108123779,
+        "threshold": 0.75,
+        "cached_answer": "In the Invest tab, you can sell Bitcoin or withdraw it to an external wallet. When withdrawing, the network fee is shown before you send, so you can review it before confirming. Note that Bitcoin features require a verified account (Profile > Verify).",
+        "fresh_answer": "You can withdraw Bitcoin to an external wallet from the Invest tab (Bitcoin). The network fee is shown before you send, so you can review it before confirming. Note this is only available to verified users.",
+        "verdict": "correct",
+        "reason": "The served answer addresses moving Bitcoin to an external wallet, including the network fee and verification requirement, which matches what the user asked.",
+        "expected_intent": "crypto_withdrawal",
+        "matched_intent": "crypto_withdrawal",
+        "label_correct": true
+      },
+      {
+        "judged_ts": "2026-10-19T22:15:00.441Z",
+        "source": "app-replay",
+        "question": "enroll in direct deposit",
+        "matched_question": "How do I set up direct deposit?",
+        "similarity": 0.8219354152679443,
+        "threshold": 0.75,
+        "cached_answer": "You have two options under the Home tab: go to **Home > Account details** to get your account and routing numbers and give them to your employer, or use **Home > Direct deposit** to send a pre-filled form directly. Once set up, paychecks can arrive up to 2 days early (automatic and free) when your employer sends the payment early.",
+        "fresh_answer": "To set up direct deposit, find your account and routing numbers under Home > Account details and give them to your employer. Or, send the pre-filled form directly from Home > Direct deposit. Once set up, paychecks can arrive up to 2 days early (automatic and free) when your employer sends the payment early.",
+        "verdict": "correct",
+        "reason": "The served answer directly addresses how to enroll in direct deposit, providing both methods (account/routing numbers and the pre-filled form) matching the reference guidance.",
+        "expected_intent": "set_up_direct_deposit",
+        "matched_intent": "set_up_direct_deposit",
+        "label_correct": true
+      },
+      {
+        "judged_ts": "2026-10-19T22:14:57.648Z",
+        "source": "app-replay",
+        "question": "enable 2FA",
+        "matched_question": "How do I turn on two-factor authentication?",
+        "similarity": 0.8004050731900392,
+        "threshold": 0.75,
+        "cached_answer": "Two-factor authentication is actually on by default at Lux Pay. To manage it, go to Profile > Settings > Security, where you can choose between receiving codes by text or using an authenticator app.",
+        "fresh_answer": "Two-factor authentication is actually on by default for your Lux Pay account. You can manage it under Profile > Settings > Security, where you can choose to receive codes by text or use an authenticator app.",
+        "verdict": "correct",
+        "reason": "The served answer addresses how to enable/manage 2FA, explaining it's on by default and where to configure it, matching the user's intent and the reference answer.",
+        "expected_intent": "two_factor_auth",
+        "matched_intent": "two_factor_auth",
+        "label_correct": true
+      },
+      {
+        "judged_ts": "2026-10-19T22:14:57.380Z",
+        "source": "app-replay",
+        "question": "atm daily limit",
+        "matched_question": "What are the ATM withdrawal limits?",
+        "similarity": 0.8243695706880605,
+        "threshold": 0.75,
+        "cached_answer": "Your ATM withdrawal limit is $1,000 per day. Keep in mind there's no fee at in-network ATMs (find them under Card > Find ATMs), while out-of-network withdrawals cost $2.50 plus the ATM owner's fee.",
+        "fresh_answer": "The ATM withdrawal limit is $1,000 per day. You can find in-network ATMs under Card > Find ATMs (free), while out-of-network ATMs cost $2.50 plus the ATM owner's fee.",
+        "verdict": "correct",
+        "reason": "The served answer directly states the $1,000 daily ATM withdrawal limit and matches the reference's guidance, correctly addressing the user's question about the ATM daily limit.",
+        "expected_intent": "atm_limits",
+        "matched_intent": "atm_limits",
+        "label_correct": true
+      },
+      {
+        "judged_ts": "2026-10-19T22:14:56.863Z",
+        "source": "app-replay",
+        "question": "direct deposit arrival time",
+        "matched_question": "When will my direct deposit arrive?",
+        "similarity": 0.7618746757507324,
+        "threshold": 0.75,
+        "cached_answer": "Direct deposits are available as soon as Lux Pay receives them from your payer\u2014and you can get paid up to 2 days early automatically (and free) when your employer sends the payment early. To set it up, give your employer the account and routing numbers under Home > Account details, or send the pre-filled form from Home > Direct deposit.\n\nIf a specific deposit hasn't shown up when expected, reach out via Profile > Support for help.",
+        "fresh_answer": "Paychecks can arrive up to 2 days early\u2014automatically and for free\u2014when your employer sends the payment early. To set it up, give your employer the account and routing numbers under Home > Account details, or send the pre-filled form from Home > Direct deposit.",
+        "verdict": "correct",
+        "reason": "The served answer directly addresses when direct deposits arrive (as soon as received, up to 2 days early) and provides accurate setup and troubleshooting guidance consistent with the reference.",
+        "expected_intent": "direct_deposit_timing",
+        "matched_intent": "direct_deposit_timing",
+        "label_correct": true
+      },
+      {
+        "judged_ts": "2026-10-19T22:14:55.007Z",
+        "source": "app-replay",
+        "question": "Where can I get a monthly statement?",
+        "matched_question": "How do I download my account statement?",
+        "similarity": 0.7748273611068726,
+        "threshold": 0.75,
+        "cached_answer": "You can find your monthly statements as PDFs under Profile > Documents. Tax forms (1099-B, 1099-INT, 1099-K) are also there, available by mid-February.",
+        "fresh_answer": "You can find your monthly statements as PDFs under Profile > Documents. Tax forms (1099-B, 1099-INT, 1099-K) are also there by mid-February.",
+        "verdict": "correct",
+        "reason": "The served answer correctly tells the user where to find monthly statements (Profile > Documents), directly addressing the question asked, and matches the reference answer.",
+        "expected_intent": "download_statement",
+        "matched_intent": "download_statement",
+        "label_correct": true
+      },
+      {
+        "judged_ts": "2026-10-19T22:14:52.874Z",
+        "source": "app-replay",
+        "question": "When will a merchant refund appear in my account?",
+        "matched_question": "How long do refunds take to show up?",
+        "similarity": 0.7767546408401326,
+        "threshold": 0.75,
+        "cached_answer": "It depends on the type of refund. Merchant refunds post in 3-10 business days, depending on the merchant. If you filed a card dispute, provisional credit is issued within 10 business days.",
+        "fresh_answer": "Merchant refunds typically post 3\u201310 business days after the merchant issues them, depending on the merchant. If it hasn't arrived after that window, you can open the transaction and tap Report a problem, or reach out via Profile > Support.",
+        "verdict": "correct",
+        "reason": "The served answer directly addresses when a merchant refund will appear (3-10 business days), which is factually consistent with the reference and correctly answers the user's question, with the dispute info being an unproblematic extra detail.",
+        "expected_intent": "refund_timing",
+        "matched_intent": "refund_timing",
+        "label_correct": true
+      }
+    ]
+  },
+  "genie_ask": {
+    "conversation_id": "01f1cc9d6d3a1e5faa769bf4f8bd3afd",
+    "message_id": "01f1cc9d6d451d4d83c07be624194141",
+    "status": "COMPLETED",
+    "error": null,
+    "text": [
+      "Last week, the **deflection rate was 29.1%** across **278 requests**, and the **cost per question was $0.0080**. For context, the **baseline cost per question was $0.0113**, which corresponds to **$0.9138** in total savings over the week."
+    ],
+    "queries": [
+      {
+        "title": null,
+        "description": "You want to see the overall deflection rate and cost per question for the last 7 days, excluding seed traffic, and only for the current system prompt version.",
+        "sql": "WITH `max_date_cte` AS ( SELECT max(`event_date`) AS `max_event_date` FROM `<catalog>`.`semantic_cache`.`gold_cache_daily` WHERE `traffic_type` <> 'seed' AND `is_current_prompt` = true ) SELECT try_divide(sum(`hits`), sum(`requests`)) AS `deflection_rate`, try_divide(sum(`llm_cost_usd`), sum(`requests`)) AS `cost_per_question_usd`, try_divide(sum(`baseline_llm_cost_usd`), sum(`requests`)) AS `baseline_cost_per_question_usd`, sum(`savings_usd`) AS `savings_usd`, sum(`requests`) AS `requests` FROM `<catalog>`.`semantic_cache`.`gold_cache_daily` CROSS JOIN `max_date_cte` WHERE `traffic_type` <> 'seed' AND `is_current_prompt` = true AND `event_date` BETWEEN date_sub(`max_event_date`, 6) AND `max_event_date`",
+        "columns": [
+          "deflection_rate",
+          "cost_per_question_usd",
+          "baseline_cost_per_question_usd",
+          "savings_usd",
+          "requests"
+        ],
+        "rows": [
+          [
+            "0.29136690647482016",
+            "0.007995519451608523",
+            "0.011282452830188684",
+            "0.913767479245283",
+            "278"
+          ]
+        ],
+        "row_count": 1
+      }
+    ],
+    "suggested_questions": [
+      "What was the deflection rate and cost per question for each traffic type last week?",
+      "What was the deflection rate and cost per question by FAQ category last week?",
+      "What was the average latency and cost per question last week?"
+    ]
+  },
+  "genie_monitor": {
+    "conversation_id": "01f1cc9d812d1beba7ba5935072f808e",
+    "message_id": "01f1cc9d813716bc92156cf9c965e440",
+    "status": "COMPLETED",
+    "error": null,
+    "text": [
+      "Yes \u2014 the false-hit monitor is **OK** right now for prompt version **189c61a1**. The current false-hit rate is **8.2%** with a 95% confidence interval of **3.2% to 19.2%**, compared with a false-hit limit of **10.0%**; **49** hits were judged, **4** were incorrect, and the recommended action is **\"No action needed.\"**"
+    ],
+    "queries": [
+      {
+        "title": null,
+        "description": "You're checking the current drift status of the false-hit monitor for the prompt version in use right now, including the false-hit rate, its 95% confidence interval, the alert limit, and the recommended action.",
+        "sql": "SELECT `prompt_version`, `status`, `judged`, `judged_incorrect`, `false_hit_rate`, `ci_low`, `ci_high`, `false_hit_limit`, `recommended_action` FROM `<catalog>`.`semantic_cache`.`gold_false_hit_monitor` WHERE `is_current_prompt` = true",
+        "columns": [
+          "prompt_version",
+          "status",
+          "judged",
+          "judged_incorrect",
+          "false_hit_rate",
+          "ci_low",
+          "ci_high",
+          "false_hit_limit",
+          "recommended_action"
+        ],
+        "rows": [
+          [
+            "189c61a1",
+            "OK",
+            "49",
+            "4",
+            "0.08163265306122448",
+            "0.03220229624171222",
+            "0.19189387041486136",
+            "0.10",
+            "No action needed."
+          ]
+        ],
+        "row_count": 1
+      }
+    ],
+    "suggested_questions": [
+      "What is the daily judged false-hit rate trend for the current prompt, including its confidence interval?",
+      "What specific cached answers did the judge mark incorrect recently, and why?",
+      "How does the false-hit monitor status compare across all prompt versions, not just the current one?",
+      "Which FAQ categories have the highest wrong-answer rates when cached at the current threshold?",
+      "How well does the judge's verdict agree with human labels on replayed traffic?"
+    ]
+  }
+}

@@ -128,7 +128,20 @@ databricks apps deploy -t dev --skip-validation --profile <profile>
 [`evidence/`](evidence/README.md) holds readable output from real runs, exported by `scripts/export_evidence.py`:
 every notebook task's code and printed output, each pipeline update's row counts and expectation results,
 snapshots of the governed tables, and responses recorded from the deployed app (including Ask Genie).
-The figures in the deck trace back to these files.
+The figures in the deck trace back to these files:
+
+| Figure | Measured value | Where |
+|---|---|---|
+| Opus latency and tokens per answer | ~1.77 s, ~1,876 input / 76 output tokens (53 misses) → ~$0.011 at list price | `app_responses.json` → `measured.llm` |
+| Repeat questions caught at 0.75 | 29.3%; wrong on repeats 1.2%, on uncached questions 1.7% (leave-one-FAQ-out) | `runs/evaluate.md` (threshold sweep) |
+| Same at 0.70 | 53.3% caught; 3.6% / 9.7% wrong | `runs/evaluate.md` |
+| Account-specific questions served from cache | 0 at 0.70 and above | `runs/evaluate.md` |
+| Cached answer latency | ~0.22 s (embed + lookup) vs ~1.76 s | `runs/evaluate.md` (savings summary) |
+| Judged false-hit rate | 8.2% (4 of 49), 95% CI 3.2–19.2%; 98% agreement with labels; monitor OK | `app_responses.json` → `judge_results`, `genie_monitor`; `tables.md` → `gold_false_hit_monitor` |
+| Cost per question with vs without the cache | gold KPIs and Genie's answer | `tables.md` → `gold_cache_daily`; `app_responses.json` → `genie_ask` |
+| 1 CU holds a 100K-entry cache | lookup p50 10.8 ms / p95 14.9 ms single client, ~200+ lookups/s with 4–32 clients | `runs/load_test.md` |
+| A real false hit | "How do I manage payment notifications?" served the recurring-payments answer at 0.804 | `app_responses.json` → `ask_false_hit_example` |
+| Pipeline data quality | 10 expectations, 0 failures over 3.04M public questions, 52 FAQs, 175 labeled questions | `runs/ingest.md` |
 
 ## App
 

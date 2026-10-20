@@ -139,9 +139,10 @@ def pipeline_markdown(w: WorkspaceClient, task: dict, warehouse: str) -> str:
         expectations += [[x["dataset"].split(".")[-1], x["name"], x["passed_records"], x["failed_records"]]
                          for x in json.loads(exp or "[]")]
     info = w.pipelines.get_update(pid, update.update_id).update
-    out = [f"Pipeline `{w.pipelines.get(pid).name}`, update `{update.update_id}`: **{info.state.value if info.state else '?'}**",
-           "Streaming (bronze) tables only read new files, so a re-run writes 0 rows to them; materialized views recompute.",
-           md_table(["dataset", "rows written this update", "rows in table", "rows dropped"], rows, 50)]
+    out = [f"Pipeline `{w.pipelines.get(pid).name}`, update `{update.update_id}`: **{info.state.value if info.state else '?'}**"]
+    if any(r[0].startswith("bronze_") for r in rows):
+        out.append("Streaming (bronze) tables only read new files, so a re-run writes 0 rows to them; materialized views recompute.")
+    out += [md_table(["dataset", "rows written this update", "rows in table", "rows dropped"], rows, 50)]
     if expectations:
         out += ["Data-quality expectations:", md_table(["dataset", "expectation", "passed", "failed"], expectations, 50)]
     return "\n\n".join(out)
@@ -167,7 +168,7 @@ def app_calls(w: WorkspaceClient, app_url: str) -> dict[str, object]:
         "config": get("/api/config"),
         "measured": measured,
         "ask_cached_paraphrase": post("/api/ask", {"question": "I forgot my PIN, how can I change it?", "threshold": 0.75, "write_back": False}),
-        "ask_false_hit_example": post("/api/ask", {"question": "How do I reset my password?", "threshold": 0.75, "write_back": False}),
+        "ask_false_hit_example": post("/api/ask", {"question": "How do I manage payment notifications?", "threshold": 0.75, "write_back": False}),
         "replay_50_at_0.75": {k: v for k, v in post("/api/replay", {"n": 50, "threshold": 0.75}).items() if k != "rows"},
         "judge_results": judge,
         "genie_ask": post("/api/genie/ask", {"question": "What was our deflection rate and cost per question last week?"}),
